@@ -8,10 +8,12 @@ RUN npm ci --legacy-peer-deps
 
 WORKDIR /app
 COPY frontend ./frontend
+COPY deployment/render-start.sh ./deployment/render-start.sh
 
 ENV PORT=10000
 
 EXPOSE 10000
 
-WORKDIR /app/frontend
-CMD ["sh", "-c", "npm run build && npm run preview -- --host 0.0.0.0 --port ${PORT}"]
+RUN chmod +x /app/deployment/render-start.sh
+
+CMD ["/app/deployment/render-start.sh"]

@@ -18,6 +18,7 @@ NEXUS lives in `frontend/`, uses Supabase for auth and data, and reads environme
 
 - The Supabase anon key is intended for client use.
 - Data isolation depends on the RLS policies in `database/supabase_schema.sql`.
-- The only fully implemented route today is `/`.
+- Live routes are `/`, `/tasks`, `/analytics`, and `/profile`.
+- Root scripts proxy into `frontend/`, so `npm run dev` works from the repo root too.
 
 Read `docs/SETUP.md` for database setup and `docs/DEPLOYMENT.md` for Render deployment.

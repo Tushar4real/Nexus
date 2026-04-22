@@ -10,6 +10,7 @@ NEXUS is configured for Render using `render.yaml` and `deployment/Dockerfile`.
    `VITE_SUPABASE_URL`
    `VITE_SUPABASE_ANON_KEY`
 4. Deploy.
+5. If you change either value later, redeploy so the container regenerates `runtime-env.js`.
 
 ## Local Verification
 
@@ -18,4 +19,4 @@ cd frontend
 npm run build
 ```
 
-The Docker image builds the frontend and serves it with `vite preview` on port `10000`.
+The Docker image generates a small runtime config file from Render env vars, then builds the frontend and serves it with `vite preview` on port `10000`.
