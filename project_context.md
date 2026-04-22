@@ -1,209 +1,284 @@
 # Project Overview
 
-This project is a React + Firebase web application named NEXUS, positioned as a social productivity operating system. The current product is primarily a personal productivity app with gamification, where users authenticate, manage tasks, earn score/XP, progress through levels, and view analytics. The social/collaborative vision (community posts, groups, global leaderboard) is present in project structure, docs, and security rules, but those product areas are mostly placeholders in the current UI.
+NEXUS is a Supabase-backed productivity application with four functional routes inside a shared shell: `/` for execution, `/tasks` for backlog planning, `/analytics` for output history, and `/profile` for account basics. It is built with React 18, Vite, React Router, and Supabase Auth/Postgres, with Supabase Realtime as the only data sync layer.
 
-At runtime, the app is a single-page frontend served by Vite/Firebase Hosting. It has no custom server; Firebase services provide backend capabilities (Auth, Firestore, and initialized Storage). Most business logic lives in React pages/hooks and Firestore document updates.
+# Current Tech Stack
 
-# Tech Stack
+- **Frontend**: React 18.2.0, React Router DOM 7.14.2
+- **Build Tool**: Vite 8.0.9
+- **Backend Platform**: Supabase
+  - Auth: Supabase Auth (email/password)
+  - Database: Supabase Postgres with RLS
+  - Real-time: Postgres changes subscriptions
+- **UI Libraries**:
+  - date-fns 3.0.6 (installed but not currently used in app logic)
+  - Recharts 2.10.3 (installed but unused)
+- **Deployment**: Docker + Render Web Service
+- **Workspace scripts**:
+  - Root `package.json` forwards `npm run dev/build/lint` into `frontend/`
+  - Frontend has its own `package.json`
+- **Dev Dependencies**:
+  - @vitejs/plugin-react 6.0.1
+  - eslint 9.x + flat config
+  - @types/react 18.2.43
+  - @types/react-dom 18.2.17
 
-- React 18
-- Vite 5
-- Firebase JS SDK (Auth, Firestore, Storage)
-- Recharts (analytics visualizations)
-- date-fns (date helpers)
-- Inline CSS-in-JS style objects with design tokens from constants
-- Firebase Hosting configuration for SPA deployment
-- Bash helper scripts for setup/deploy
-
-# Features Implemented
-
-- Email/password authentication flow (signup, login, logout) with auth-state persistence.
-- Firestore user profile creation on signup with initial gamification stats.
-- Task management:
-- Create task
-- Edit task
-- Delete task
-- Filter by status, difficulty, and category
-- Mark task complete
-- Task scoring mechanics:
-- XP based on difficulty + time bonus/penalty
-- User aggregate increments (`score`, `completed`, `hardTasks`) after completion
-- Dashboard experience:
-- Overview cards
-- Urgent and recent task slices
-- Level progress and badges display
-- Analytics experience:
-- KPI cards
-- 14-day trend chart
-- Category distribution chart
-- Badge state visualization
-- Realtime Firestore updates via `onSnapshot`.
-- Responsive app shell with mobile sidebar toggle/overlay.
-- Firebase Hosting setup (`dist` output + SPA rewrites).
-
-# Features In Progress
-
-- Community page scaffolding exists but is placeholder-only ("coming soon" content).
-- Groups page scaffolding exists but is placeholder-only.
-- Leaderboard page scaffolding exists but is placeholder-only.
-- Streak appears designed into user model and badge logic but update mechanics are not implemented in current write paths.
-- Firebase Storage is configured in app bootstrap but no end-user feature currently uses it.
-
-# Missing Features
-
-- End-to-end community functionality:
-- Create/read/update/delete posts in UI
-- Feed rendering
-- Reactions/comments interactions
-- End-to-end groups functionality:
-- Group creation and membership logic in UI/data model
-- Shared group tasks/coordination flows
-- Group-level analytics or competition
-- End-to-end global leaderboard:
-- Cross-user ranking queries
-- Pagination/time windows/rules for tie handling
-- Notification/reminder system (present in roadmap docs, absent in implementation).
-- Production-grade transactional consistency for task completion and score updates (currently split into separate writes).
-- `.env.example` template file referenced by docs and setup UX is missing from repository.
-
-# File Structure
+# Core Architecture
 
 ```text
-App_Project/
+frontend/
 ├── src/
-│   ├── main.jsx                 # Frontend entry: mounts React app
-│   ├── App.jsx                  # App shell, auth/error gates, page switching, responsive layout
 │   ├── components/
-│   │   ├── Auth.jsx             # Login/signup UI and form handling
-│   │   ├── Sidebar.jsx          # Main navigation and user panel
-│   │   └── UI.jsx               # Shared UI primitives (buttons, modal, form inputs, tags)
+│   │   ├── AppShell.jsx          # Shared nav/shell
+│   │   └── Auth.jsx              # Login/signup form
 │   ├── config/
-│   │   └── firebase.js          # Firebase initialization + config guard + exported services
+│   │   └── supabase.js           # Supabase client initialization
+│   ├── context/
+│   │   └── ThemeContext.jsx      # Dark/light theme state
 │   ├── hooks/
-│   │   ├── useAuth.js           # Auth lifecycle and user document hydration/bootstrap
-│   │   └── useFirestore.js      # Generic realtime collection hook with CRUD helpers
+│   │   ├── useAuth.js            # Auth bootstrap + signup/login/logout
+│   │   └── useTasks.js           # Realtime task load + CRUD helpers
 │   ├── pages/
-│   │   ├── Dashboard.jsx        # User overview, urgent/recent tasks, level/badge progress
-│   │   ├── Tasks.jsx            # Task CRUD, filters, completion flow, score updates
-│   │   ├── Analytics.jsx        # Trend and category charts + badge/metric summaries
-│   │   ├── Community.jsx        # Placeholder page
-│   │   ├── Groups.jsx           # Placeholder page
-│   │   └── Leaderboard.jsx      # Placeholder page
-│   └── utils/
-│       ├── constants.js         # Design tokens, categories, levels, badge definitions
-│       └── helpers.js           # Scoring, level math, date utility logic
-├── database/
-│   └── firestore.rules          # Firestore security rules
-├── docs/
-│   ├── README.md                # Product/developer overview and setup
-│   ├── SETUP.md                 # Setup details
-│   ├── DEPLOYMENT.md            # Deployment notes
-│   └── IMPROVEMENTS.md          # Future enhancement notes
-├── scripts/
-│   ├── setup.sh                 # Local bootstrap helper (contains env template path mismatch)
-│   └── deploy.sh                # Build/deploy helper
-├── index.html                   # HTML shell entry
-├── package.json                 # Dependencies + scripts
-├── vite.config.js               # Vite config (aliases, build/dev settings)
-├── firebase.json                # Firebase Hosting config
-├── .env                         # Local environment variables (developer machine)
-├── dist/                        # Built frontend artifact output
-└── node_modules/                # Installed dependencies
+│   │   ├── Analytics.jsx         # Heatmap + summary stats
+│   │   ├── Dashboard.jsx         # Execution zone
+│   │   ├── Profile.jsx           # Minimal account page
+│   │   ├── RoutePlaceholders.jsx # Only used for any remaining placeholder routes
+│   │   └── Tasks.jsx             # Planning backlog grouped by urgency
+│   ├── utils/
+│   │   ├── constants.js          # Legacy constants, mostly unused
+│   │   └── helpers.js            # Date helpers
+│   ├── App.jsx                   # Root routes + auth gate
+│   ├── main.jsx                  # React entry point
+│   └── styles.css                # Global CSS and page styles
+├── eslint.config.js
+├── index.html
+├── package.json
+└── vite.config.js
+
+database/
+└── supabase_schema.sql           # Postgres schema + RLS policies
+
+deployment/
+└── Dockerfile                    # Render image
+
+docs/
+├── START_HERE.md
+├── SETUP.md
+└── DEPLOYMENT.md
+
+render.yaml
+package.json                      # Root script proxy into frontend/
 ```
 
-Key entry points:
-- Frontend runtime starts at `index.html` -> `src/main.jsx` -> `src/App.jsx`.
-- Data/auth integration starts from `src/config/firebase.js` and is consumed by hooks/pages.
-- Security boundary is defined in `database/firestore.rules`.
+**Data Flow**: User action -> page/component -> hook -> Supabase API -> realtime listener -> hook state -> rerender
 
-# Architecture & Data Flow
+**State Management**: React local state only. Supabase Postgres is the source of truth. No Redux, Zustand, or custom cache layer beyond a tiny in-memory auth profile cache.
 
-The application follows a frontend-heavy, BaaS architecture:
+# Established Patterns
 
-1. Initialization and auth gate
-- `src/main.jsx` renders `App`.
-- `App` calls `useAuth`.
-- `useAuth` subscribes to Firebase `onAuthStateChanged`.
-- If user is logged in, it fetches `users/{uid}` from Firestore and merges auth identity with profile stats into a single `user` object.
-- `App` conditionally renders:
-- loading state
-- configuration/error state
-- auth screen
-- main app shell
+## Code Style
 
-2. Navigation and page composition
-- Page routing is local component state (`dashboard`, `tasks`, `community`, `groups`, `analytics`, `leaderboard`) rather than React Router.
-- Sidebar controls active page.
-- Selected page receives `userId` and `user` props.
+- **CSS Variables**: Theming stays in `styles.css` using the `data-theme` attribute.
+- **Functional Components**: Hooks-only, no classes.
+- **Async/await**: All Supabase calls use async/await and throw on mutation failure.
+- **Minimal abstraction**: Direct hook-to-Supabase access, no service layer.
+- **Mono usage**: `.mono` is reserved mainly for numbers and key metrics.
 
-3. Data access pattern
-- `useFirestore(collectionName, userId, queryConstraints)` builds a Firestore query constrained by `userId`.
-- It subscribes via `onSnapshot` and returns live `data` + CRUD helpers (`add`, `update`, `remove`).
-- This pattern drives pages like Tasks and Analytics with realtime updates.
+## Component / Route Patterns
 
-4. Task lifecycle and scoring flow
-- User creates/edits/deletes tasks from `Tasks.jsx`.
-- On completion:
-- Task document is updated to `Completed`, with completion date and computed points.
-- User document is updated separately with incremented aggregate counters.
-- Dashboard/analytics recompute views from live tasks + user profile fields.
+- **React Router**: Auth-gated nested routes under `<AppShell />`
+- **Outlet pattern**: Shared shell renders `<Outlet />`
+- **Route set is now live**:
+  - `/` -> `Dashboard`
+  - `/tasks` -> `Tasks`
+  - `/analytics` -> `Analytics`
+  - `/profile` -> `Profile`
+- **Theme toggle**: Shared `useTheme()` context with `localStorage` persistence
 
-5. Gamification and derived state
-- Static progression model (levels, badges, category/colors, etc.) resides in `constants.js`.
-- Dynamic calculations (XP from tasks, relative dates, level progress helpers) live in `helpers.js`.
-- UI reads computed values; no dedicated backend worker enforces consistency.
+## Data Patterns
 
-6. Backend and security model
-- No custom API server exists.
-- Firestore security rules enforce per-user task ownership and define access for users/posts/groups.
-- Hosting serves built SPA from `dist` with rewrite to `index.html`.
+- **Task weights**: 10 (Easy), 40 (Medium), 100 (Hard)
+- **Execution target**: 100 points per day
+- **Dates**: `YYYY-MM-DD` via `localDateKey()`
+- **Task grouping on `/tasks`**:
+  - `Today`: due today or overdue
+  - `Upcoming`: due within next 7 days
+  - `Later`: anything beyond that
+- **Analytics heatmap**:
+  - last 84 days
+  - intensity based on completed daily points
 
-# Known Issues / Risks
+## Supabase Patterns
 
-- `.env.example` is missing, although docs and setup messaging depend on it.
-- `scripts/setup.sh` looks for `config/.env.example`, which does not match documented path and current file layout.
-- `package.json` lint script points to `frontend/src`, but source is in `src`.
-- `useFirestore` effect dependencies omit `queryConstraints`, which can cause stale subscriptions when constraints change.
-- Task completion uses two separate writes (task update, then user aggregate update) without transaction/batch; partial failure can desynchronize score and task status.
-- Task form modal initializes local state once from `editing`; switching edit targets can yield stale form data unless remounted/reset.
-- Streak is modeled and displayed but not actually updated by implemented flows, so streak-driven badges are effectively unreachable without manual data edits.
-- Firestore rules permit any authenticated user to update/delete any group (`/groups/{groupId}`), which is over-permissive.
-- Firestore rules allow authenticated users to read all user documents, potentially broader exposure than intended.
-- Firebase config diagnostics are logged in client console; low severity but unnecessary in production.
+- **Tables**:
+  - `profiles`: `id`, `name`, `email`, `avatar`
+  - `tasks`: `id`, `user_id`, `text`, `weight`, `completed`, `target_date`, `completed_day`
+- **RLS**: all access depends on `auth.uid()`
+- **Signup profile behavior**:
+  - DB trigger creates profile row
+  - client upsert remains as fallback
+- **Realtime**:
+  - one `postgres_changes` subscription per signed-in user
+  - filter syntax must remain `user_id=eq.${userId}`
 
-# Next Recommended Steps
+## Error Handling
 
-1. Stabilize developer setup
-- Add root `.env.example` with all required `VITE_FIREBASE_*` keys.
-- Fix setup instructions and script path mismatch (`scripts/setup.sh` should copy from root template).
-- Correct lint script path to `eslint src`.
+- **Config errors**: shown as full-screen setup state
+- **Recoverable auth errors**: do not block the whole app if a profile fetch fails
+- **Task/page mutation errors**: surfaced inline on the relevant page
+- **Known normalized auth copy**:
+  - `email rate limit exceeded` is translated into a clearer local-dev message
 
-2. Fix correctness and data consistency
-- Convert task completion updates to Firestore `writeBatch` or transaction.
-- Update `useFirestore` dependencies to safely react to query-constraint changes.
-- Add explicit error handling/UI feedback for failed writes.
+# Non-Obvious Quirks
 
-3. Complete gamification loop
-- Implement streak update logic (daily completion tracking + reset policy).
-- Validate badge unlocking rules against actual tracked metrics.
-- Add tests around scoring and level progression helper functions.
+- **Env loading**: Vite is configured to load env from the repo root `.env`, not `frontend/.env`
+- **Root npm commands**: root `package.json` proxies into `frontend/`
+- **StrictMode removed in dev entry**: this was done to reduce duplicate auth bootstrap work during development
+- **Auth bootstrap is optimistic**:
+  - session user is rendered immediately
+  - profile hydration finishes in background
+- **Profile cache**: `useAuth()` keeps a small in-memory cache for profile hydration speed
+- **Dashboard quick add**:
+  - input auto-focuses on mount
+  - refocuses after successful submit
+- **Profile delete limitation**:
+  - current delete action removes `tasks` + `profiles` rows and signs the user out
+  - it does **not** remove the row from `auth.users`
+  - full auth-user deletion requires a server-side action with `service_role`
 
-4. Harden security model
-- Restrict group update/delete rules to owners/admins/membership checks.
-- Decide user profile visibility policy and tighten `/users` read rule if needed.
-- Add rules tests for tasks, users, groups, and future posts logic.
+# Resolved / Important Bugs (Do Not Reintroduce)
 
-5. Build missing social features incrementally
-- Community MVP: post create/list/delete for owner, then comments/reactions.
-- Groups MVP: create/join group, group membership model, basic shared feed/tasks.
-- Leaderboard MVP: query and display ranked users by score with paging.
+- **Supabase URL**: strip `/rest/v1` suffix from `VITE_SUPABASE_URL`
+- **Auth bootstrap**: must call `getSession()` and also subscribe to `onAuthStateChange()`
+- **Profile race**: fallback `upsertProfile()` still matters after signup
+- **Realtime filter**: must use `user_id=eq.${userId}`
+- **Completed day reset**: unchecking a task must set `completed_day: null`
+- **Task sort timestamp**: `created_at` from Supabase is a timestamp string, not a Firestore `seconds` object
+- **Root startup**: root `package.json` exists so `npm run dev` works from repo root
+- **Vite/plugin mismatch**: `@vitejs/plugin-react` was updated to a Vite 8-compatible version
 
-6. Improve maintainability
-- Introduce route-based navigation (React Router) as pages expand.
-- Separate domain/data logic from heavy page components where complexity grows.
-- Add component-level and integration tests for auth, tasks, and analytics flows.
+# Current Route Behavior
 
-7. Prepare production readiness
-- Remove nonessential client-side config logging in production builds.
-- Add loading/empty/error states uniformly across all pages.
-- Formalize CI checks (lint/test/build) before deployment.
+## `/` Dashboard
+
+- Execution-focused page
+- Progress block is dominant
+- Shows:
+  - current points / 100
+  - progress bar
+  - completed count
+  - open due count
+  - current streak
+- Due task list:
+  - points shown prominently
+  - checkbox toggles completion
+  - task rows update via realtime sync
+- Quick add:
+  - text input
+  - weight toggle
+  - submit button
+
+## `/tasks` Planning Backlog
+
+- Functional grouped backlog page
+- Groups tasks into `Today`, `Upcoming`, `Later`
+- Per-task actions:
+  - toggle complete
+  - `Push to Today`
+  - `Delete`
+- Hard tasks get stronger visual treatment
+
+## `/analytics`
+
+- Strict minimal analytics page
+- Stats:
+  - total points
+  - average per day
+  - current streak
+  - longest streak
+- Heatmap:
+  - GitHub-style grid
+  - 84-day range
+  - points-based intensity
+
+## `/profile`
+
+- Minimal account page
+- Shows:
+  - initials
+  - name
+  - email
+  - theme toggle
+  - logout
+  - red delete button
+- Delete behavior:
+  - removes profile/task data
+  - signs user out
+  - does not fully delete Supabase auth user yet
+
+# Security Considerations
+
+- **Anon key**: safe to expose in browser per Supabase model
+- **RLS**: still the primary security boundary
+- **Client-only limitation**: any admin auth operation, including full user deletion, cannot be done safely from browser
+- **Session storage**: auth session persists in `localStorage`
+- **Input handling**: no direct HTML injection paths introduced; React escaping remains relied on
+
+# Performance Notes
+
+- **Auth path faster now**:
+  - immediate session-based render
+  - cached profile hydration
+  - fewer visible delays on first load/login
+- **Dev startup faster**:
+  - no `React.StrictMode` double-mount in `main.jsx`
+- **Realtime approach**:
+  - still refetches all tasks on each task table event
+  - functional, but not yet optimal for heavier workloads
+- **Bundle**:
+  - still includes unused `recharts`
+  - still no route-level code splitting
+
+# Current State
+
+- ✅ Auth flow working: signup, login, logout, session persistence
+- ✅ Root-level `npm run dev/build/lint` works
+- ✅ Realtime task loading and updates working
+- ✅ Dashboard is fully functional
+- ✅ Tasks backlog page is fully functional
+- ✅ Analytics page is fully functional
+- ✅ Profile page is functional within client-only constraints
+- ✅ Theme toggle works globally
+- ✅ Build succeeds
+- ✅ Lint succeeds
+
+# Known Limitations / Risks
+
+- 🟡 Full account deletion is not complete yet because deleting `auth.users` needs server-side Supabase admin access
+- 🟡 Realtime task sync still reloads the full task list on every DB event
+- 🟡 No tests are implemented
+- 🟡 Recharts remains installed but unused
+- 🟡 Legacy helpers/constants still exist and can confuse future work
+- 🟡 No loading skeletons or error boundary yet
+
+# Immediate Next Priorities
+
+1. Remove unused `recharts`
+2. Decide whether to add a proper server-side account deletion path
+3. Reduce full-list reload behavior in `useTasks()` realtime handling
+4. Add tests for date logic and critical auth/task flows
+5. Clean legacy helpers/constants that no longer match the live app
+
+# Recovery Notes
+
+- If work needs to resume later, start from:
+  - `frontend/src/App.jsx`
+  - `frontend/src/hooks/useAuth.js`
+  - `frontend/src/hooks/useTasks.js`
+  - `frontend/src/pages/Dashboard.jsx`
+  - `frontend/src/pages/Tasks.jsx`
+  - `frontend/src/pages/Analytics.jsx`
+  - `frontend/src/pages/Profile.jsx`
+- Last known safe verification:
+  - `npm run lint` passed
+  - `npm run build` passed

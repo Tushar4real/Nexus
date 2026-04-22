@@ -3,20 +3,12 @@ services:
     name: nexus-productivity
     env: docker
     plan: free
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./deployment/Dockerfile
     autoDeploy: true
     envVars:
       - key: PORT
         value: 10000
-      - key: VITE_FIREBASE_API_KEY
+      - key: VITE_SUPABASE_URL
         sync: false
-      - key: VITE_FIREBASE_AUTH_DOMAIN
-        sync: false
-      - key: VITE_FIREBASE_PROJECT_ID
-        sync: false
-      - key: VITE_FIREBASE_STORAGE_BUCKET
-        sync: false
-      - key: VITE_FIREBASE_MESSAGING_SENDER_ID
-        sync: false
-      - key: VITE_FIREBASE_APP_ID
+      - key: VITE_SUPABASE_ANON_KEY
         sync: false

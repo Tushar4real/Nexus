@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTasks } from '@hooks/useTasks';
 import { localDateKey, shiftLocalDateKey } from '@utils/helpers';
 
@@ -17,11 +17,11 @@ const getGreeting = () => {
 };
 
 const formatTimestamp = (timestamp) => {
-  if (!timestamp?.toDate) {
+  if (!timestamp) {
     return '';
   }
 
-  return timestamp.toDate().toLocaleTimeString([], {
+  return new Date(timestamp).toLocaleTimeString([], {
     hour: '2-digit',
     minute: '2-digit'
   });
@@ -49,7 +49,10 @@ const Dashboard = ({ user }) => {
   const { tasks, loading, error, addTask, toggleTask } = useTasks(user?.uid);
   const [draft, setDraft] = useState('');
   const [weight, setWeight] = useState(10);
+  const [actionError, setActionError] = useState('');
+  const inputRef = useRef(null);
   const today = localDateKey();
+  const completedTodayCount = tasks.filter((task) => task.completed && task.completedDay === today).length;
 
   const todaysPoints = useMemo(() => (
     tasks
@@ -72,23 +75,44 @@ const Dashboard = ({ user }) => {
           return targetCompare;
         }
 
-        const aCreated = a.createdAt?.seconds || 0;
-        const bCreated = b.createdAt?.seconds || 0;
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return aCreated - bCreated;
       })
   ), [tasks, today]);
 
   const progress = Math.min((todaysPoints / 100) * 100, 100);
+  const progressState = todaysPoints >= 100 ? 'high' : todaysPoints >= 50 ? 'active' : 'low';
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setActionError('');
 
     if (!draft.trim()) {
       return;
     }
 
-    await addTask(draft, weight);
-    setDraft('');
+    try {
+      await addTask(draft, weight);
+      setDraft('');
+      inputRef.current?.focus();
+    } catch (err) {
+      setActionError(err.message || 'Unable to add task right now.');
+    }
+  };
+
+  const handleToggleTask = async (task) => {
+    setActionError('');
+
+    try {
+      await toggleTask(task);
+    } catch (err) {
+      setActionError(err.message || 'Unable to update task right now.');
+    }
   };
 
   return (
@@ -99,24 +123,31 @@ const Dashboard = ({ user }) => {
             {getGreeting()}, {user?.name?.split(' ')[0] || 'User'}
           </h1>
           <p className="dashboard-subtitle">
-            Your work due today, completed live.
+            Execute what is due. Close the list.
           </p>
         </div>
-        <div className="dashboard-meta mono">
-          <span>{todaysPoints} pts today</span>
-          <span>{streak} day streak</span>
+        <div className="dashboard-meta">
+          <span><strong className="mono">{todaysPoints}</strong> pts today</span>
+          <span><strong className="mono">{streak}</strong> day streak</span>
         </div>
       </header>
 
       <form className="quick-input-shell" onSubmit={handleSubmit}>
-        <input
-          className="quick-input"
-          type="text"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Add a task and press Enter"
-          aria-label="Quick add task"
-        />
+        <div className="quick-input-row">
+          <input
+            className="quick-input"
+            type="text"
+            ref={inputRef}
+            autoFocus
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            placeholder="Add a task"
+            aria-label="Quick add task"
+          />
+          <button type="submit" className="quick-submit">
+            Add
+          </button>
+        </div>
         <div className="weight-toggle" role="tablist" aria-label="Task weight">
           {WEIGHT_OPTIONS.map((option) => (
             <button
@@ -126,17 +157,54 @@ const Dashboard = ({ user }) => {
               onClick={() => setWeight(option.value)}
             >
               <span>{option.label}</span>
-              <span className="mono">{option.value}pts</span>
+              <span className="mono">{option.value}</span>
             </button>
           ))}
         </div>
       </form>
 
+      {actionError && <p className="section-note section-note-danger">{actionError}</p>}
+
       <div className="dashboard-grid">
+        <aside className={`metrics-panel progress-state-${progressState}`}>
+          <div className="section-head">
+            <span>Execution Score</span>
+            <span><strong className="mono">100</strong> target</span>
+          </div>
+
+          <div className="goal-card">
+            <div className="goal-kicker">Today</div>
+            <div className="goal-value mono">{todaysPoints}/100</div>
+            <progress className="goal-progress" value={progress} max="100" />
+            <div className="goal-scale mono">
+              <span>0</span>
+              <span>50</span>
+              <span>100</span>
+            </div>
+          </div>
+
+          <div className="metric-stack">
+            <div className="metric-box">
+              <span className="metric-label">Completed Today</span>
+              <strong className="mono">{completedTodayCount}</strong>
+            </div>
+            <div className="metric-box">
+              <span className="metric-label">Open Due Tasks</span>
+              <strong className="mono">
+                {dueTasks.filter((task) => !task.completed).length}
+              </strong>
+            </div>
+            <div className="metric-box">
+              <span className="metric-label">Streak</span>
+              <strong className="mono">{streak}</strong>
+            </div>
+          </div>
+        </aside>
+
         <div className="task-panel">
           <div className="section-head">
             <span>Due Now</span>
-            <span className="mono">{dueTasks.length} items</span>
+            <span><strong className="mono">{dueTasks.length}</strong> items</span>
           </div>
 
           {loading && <p className="section-note">Loading tasks...</p>}
@@ -150,59 +218,28 @@ const Dashboard = ({ user }) => {
               {dueTasks.map((task) => (
                 <label key={task.id} className={`task-row${task.completed ? ' completed' : ''}`}>
                   <input
+                    className="task-check"
                     type="checkbox"
                     checked={Boolean(task.completed)}
-                    onChange={() => toggleTask(task)}
+                    onChange={() => {
+                      void handleToggleTask(task);
+                    }}
                   />
+                  <span className="task-points mono">{task.weight}</span>
                   <div className="task-copy">
                     <span>{task.text}</span>
-                    <span className="task-date mono">
+                    <span className="task-date">
                       {task.targetDate}
                       {task.completed && task.completedDay === today && formatTimestamp(task.createdAt)
                         ? ` · created ${formatTimestamp(task.createdAt)}`
                         : ''}
                     </span>
                   </div>
-                  <span className="task-points mono">{task.weight}</span>
                 </label>
               ))}
             </div>
           )}
         </div>
-
-        <aside className="metrics-panel">
-          <div className="section-head">
-            <span>Today&apos;s Goal</span>
-            <span className="mono">100 pts</span>
-          </div>
-
-          <div className="goal-card">
-            <div className="goal-value mono">{todaysPoints}/100</div>
-            <div className="goal-bar">
-              <div className="goal-marker mono">50</div>
-              <div className="goal-fill" style={{ width: `${progress}%` }} />
-            </div>
-            <div className="goal-scale mono">
-              <span>0</span>
-              <span>100</span>
-            </div>
-          </div>
-
-          <div className="metric-stack">
-            <div className="metric-box">
-              <span className="metric-label">Completed Today</span>
-              <strong className="mono">
-                {tasks.filter((task) => task.completed && task.completedDay === today).length}
-              </strong>
-            </div>
-            <div className="metric-box">
-              <span className="metric-label">Open Due Tasks</span>
-              <strong className="mono">
-                {dueTasks.filter((task) => !task.completed).length}
-              </strong>
-            </div>
-          </div>
-        </aside>
       </div>
     </section>
   );

@@ -61,19 +61,19 @@ const ThemeButton = ({ mobile = false }) => {
       onClick={toggleTheme}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      <span className="mono">{theme === 'dark' ? 'LIGHT' : 'DARK'}</span>
+      <span>{theme === 'dark' ? 'LIGHT' : 'DARK'}</span>
     </button>
   );
 };
 
-export const AppShell = ({ user, onLogout }) => {
+export const AppShell = ({ user, onLogout, authWarning = '' }) => {
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="sidebar-header">
           <div>
             <div className="app-brand">NEXUS</div>
-            <div className="app-subtitle mono">PRODUCTIVITY</div>
+            <div className="app-subtitle">EXECUTION BOARD</div>
           </div>
           <ThemeButton />
         </div>
@@ -94,7 +94,7 @@ export const AppShell = ({ user, onLogout }) => {
 
         <div className="sidebar-footer">
           <div className="profile-card">
-            <div className="profile-avatar mono">
+            <div className="profile-avatar">
               {(user?.name || 'User')
                 .split(' ')
                 .map((part) => part[0])
@@ -104,7 +104,7 @@ export const AppShell = ({ user, onLogout }) => {
             </div>
             <div className="profile-copy">
               <div className="profile-name">{user?.name || 'User'}</div>
-              <div className="profile-email mono">{user?.email || 'Signed in'}</div>
+              <div className="profile-email">{user?.email || 'Signed in'}</div>
             </div>
           </div>
           <button type="button" className="logout-button" onClick={onLogout}>
@@ -114,6 +114,11 @@ export const AppShell = ({ user, onLogout }) => {
       </aside>
 
       <div className="app-main">
+        {authWarning && (
+          <div className="shell-warning section-note">
+            Profile sync issue: {authWarning}
+          </div>
+        )}
         <ThemeButton mobile />
         <main className="app-content">
           <Outlet />

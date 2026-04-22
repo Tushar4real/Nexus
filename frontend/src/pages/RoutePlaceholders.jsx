@@ -1,7 +1,11 @@
 const PlaceholderPage = ({ title }) => (
   <section className="page-placeholder">
     <div className="page-placeholder-inner">
-      <p className="page-kicker mono">{title}</p>
+      <p className="page-kicker">{title}</p>
+      <h1 className="page-placeholder-title">{title} locked</h1>
+      <p className="page-placeholder-copy">
+        This route is reserved. Current execution happens on the dashboard.
+      </p>
       <div className="page-divider" />
     </div>
   </section>

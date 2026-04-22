@@ -1,10 +1,12 @@
 node_modules
+frontend/node_modules
 dist
+frontend/dist
 .env
+frontend/.env
 .env.*
 .git
 .DS_Store
-firebase-debug.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
