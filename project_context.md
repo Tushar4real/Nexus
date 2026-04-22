@@ -7,7 +7,7 @@ NEXUS is a Supabase-backed productivity application with four functional routes 
 - **Frontend**: React 18.2.0, React Router DOM 7.14.2
 - **Build Tool**: Vite 8.0.9
 - **Backend Platform**: Supabase
-  - Auth: Supabase Auth (email/password)
+  - : Supabase Auth (email/password)
   - Database: Supabase Postgres with RLS
   - Real-time: Postgres changes subscriptions
 - **UI Libraries**:
