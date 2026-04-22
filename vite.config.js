@@ -23,6 +23,9 @@ export default defineConfig({
     port: 3000,
     open: true
   },
+  preview: {
+    allowedHosts: ['nexus-ipl2.onrender.com']
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
