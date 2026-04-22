@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-const runtimeEnv = typeof window !== 'undefined' ? window.__NEXUS_ENV__ || {} : {};
 const readEnvValue = (...values) => values.find((value) => typeof value === 'string' && value.trim())?.trim() || '';
 const isPlaceholderValue = (value) => (
   !value
@@ -8,9 +7,9 @@ const isPlaceholderValue = (value) => (
   || value.includes('your-project-ref.supabase.co')
 );
 
-const rawUrl = readEnvValue(runtimeEnv.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_URL);
+const rawUrl = readEnvValue(import.meta.env.VITE_SUPABASE_URL);
 const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/, '');
-const supabaseAnonKey = readEnvValue(runtimeEnv.VITE_SUPABASE_ANON_KEY, import.meta.env.VITE_SUPABASE_ANON_KEY);
+const supabaseAnonKey = readEnvValue(import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 export const missingSupabaseKeys = [
   isPlaceholderValue(supabaseUrl) && 'VITE_SUPABASE_URL',

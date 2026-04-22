@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "rm -f dist/runtime-env.js && vite build",
+    "start": "vite preview --host 0.0.0.0",
     "preview": "vite preview",
     "lint": "eslint src",
     "setup": "bash ../scripts/setup.sh",

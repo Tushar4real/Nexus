@@ -10,12 +10,5 @@ fi
 
 cd "$APP_DIR"
 
-cat > public/runtime-env.js <<EOF
-window.__NEXUS_ENV__ = {
-  VITE_SUPABASE_URL: "${VITE_SUPABASE_URL:-}",
-  VITE_SUPABASE_ANON_KEY: "${VITE_SUPABASE_ANON_KEY:-}"
-};
-EOF
-
 npm run build
-exec npm run preview -- --host 0.0.0.0 --port "${PORT:-10000}"
+exec npm run start -- --port "${PORT:-10000}"

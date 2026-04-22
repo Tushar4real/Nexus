@@ -11,6 +11,7 @@ COPY frontend ./frontend
 COPY deployment/render-start.sh ./deployment/render-start.sh
 
 ENV PORT=10000
+ENV NODE_ENV=production
 
 EXPOSE 10000
 
