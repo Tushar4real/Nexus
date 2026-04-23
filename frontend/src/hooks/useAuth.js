@@ -179,12 +179,17 @@ export const useAuth = () => {
 
     if (data.user && data.session) {
       await upsertProfile(data.user, name);
-      profileCache.set(data.user.id, {
+      const profile = {
         id: data.user.id,
         name,
         email: data.user.email || '',
         avatar: buildAvatar(name, data.user.email || '')
-      });
+      };
+      profileCache.set(data.user.id, profile);
+      setUser(buildUser(data.user, profile));
+      setError(null);
+      setConfigError(null);
+      setLoading(false);
     }
 
     return data.user;
@@ -204,6 +209,15 @@ export const useAuth = () => {
       throw new Error(normalizeAuthError(loginError, 'Authentication failed'));
     }
 
+    if (data.user) {
+      setUser((currentUser) => currentUser?.uid === data.user.id
+        ? currentUser
+        : buildUser(data.user, profileCache.get(data.user.id) || {}));
+      setError(null);
+      setConfigError(null);
+      setLoading(false);
+    }
+
     return data;
   };
 
@@ -221,6 +235,11 @@ export const useAuth = () => {
     if (user?.uid) {
       profileCache.delete(user.uid);
     }
+
+    setUser(null);
+    setError(null);
+    setConfigError(null);
+    setLoading(false);
   };
 
   return { user, loading, signup, login, logout, error, configError };

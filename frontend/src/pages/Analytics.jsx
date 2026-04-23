@@ -146,8 +146,8 @@ const Analytics = ({ user }) => {
 
             <div className="analytics-heatmap-shell">
               <div className="analytics-weekdays">
-                {WEEKDAY_LABELS.map((label) => (
-                  <span key={label}>{label}</span>
+                {WEEKDAY_LABELS.map((label, index) => (
+                  <span key={`${label}-${index}`}>{label}</span>
                 ))}
               </div>
 

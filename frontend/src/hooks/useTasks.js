@@ -2,9 +2,27 @@ import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@config/supabase';
 import { localDateKey } from '@utils/helpers';
 
+const TASK_TEXT_COLUMNS = ['text', 'title', 'name', 'description'];
+
+const resolveTaskText = (task) => (
+  TASK_TEXT_COLUMNS
+    .map((column) => task?.[column])
+    .find((value) => typeof value === 'string' && value.trim())
+    ?.trim() || ''
+);
+
+const detectTaskTextColumn = (task) => (
+  TASK_TEXT_COLUMNS.find((column) => typeof task?.[column] === 'string') || 'text'
+);
+
+const isMissingColumnError = (error, column) => {
+  const message = error?.message?.toLowerCase() || '';
+  return message.includes(`could not find the '${column.toLowerCase()}' column`);
+};
+
 const mapTask = (task) => ({
   id: task.id,
-  text: task.text,
+  text: resolveTaskText(task),
   weight: task.weight,
   completed: task.completed,
   createdAt: task.created_at,
@@ -12,16 +30,45 @@ const mapTask = (task) => ({
   completedDay: task.completed_day
 });
 
+const sortTasks = (tasks) => [...tasks].sort((a, b) => {
+  const targetCompare = (a.targetDate || '').localeCompare(b.targetDate || '');
+  if (targetCompare !== 0) {
+    return targetCompare;
+  }
+
+  const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  return aCreated - bCreated;
+});
+
+const upsertTaskInList = (tasks, nextTask) => {
+  const existingIndex = tasks.findIndex((task) => task.id === nextTask.id);
+
+  if (existingIndex === -1) {
+    return sortTasks([...tasks, nextTask]);
+  }
+
+  const nextTasks = [...tasks];
+  nextTasks[existingIndex] = {
+    ...nextTasks[existingIndex],
+    ...nextTask
+  };
+
+  return sortTasks(nextTasks);
+};
+
 export const useTasks = (userId) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [taskTextColumn, setTaskTextColumn] = useState('text');
 
   useEffect(() => {
     if (!supabase || !userId) {
       setTasks([]);
       setError(null);
       setLoading(false);
+      setTaskTextColumn('text');
       return;
     }
 
@@ -48,7 +95,14 @@ export const useTasks = (userId) => {
         return;
       }
 
-      setTasks((data || []).map(mapTask));
+      const nextTasks = (data || []).map(mapTask);
+      const firstTaskWithText = (data || []).find((task) => resolveTaskText(task));
+
+      if (firstTaskWithText) {
+        setTaskTextColumn(detectTaskTextColumn(firstTaskWithText));
+      }
+
+      setTasks(sortTasks(nextTasks));
       setError(null);
       setLoading(false);
     };
@@ -83,20 +137,49 @@ export const useTasks = (userId) => {
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from('tasks')
-        .insert({
-          user_id: userId,
-          text: text.trim(),
-          weight,
-          completed: false,
-          target_date: localDateKey(),
-          completed_day: null
-        });
+      const trimmedText = text.trim();
+      const basePayload = {
+        user_id: userId,
+        weight,
+        completed: false,
+        target_date: localDateKey(),
+        completed_day: null
+      };
 
-      if (insertError) {
-        throw insertError;
+      const candidateColumns = [
+        taskTextColumn,
+        ...TASK_TEXT_COLUMNS.filter((column) => column !== taskTextColumn)
+      ];
+
+      let lastError = null;
+
+      for (const column of candidateColumns) {
+        const { data, error: insertError } = await supabase
+          .from('tasks')
+          .insert({
+            ...basePayload,
+            [column]: trimmedText
+          })
+          .select('*')
+          .single();
+
+        if (!insertError) {
+          setTaskTextColumn(column);
+          if (data) {
+            setTasks((currentTasks) => upsertTaskInList(currentTasks, mapTask(data)));
+          }
+          setError(null);
+          return;
+        }
+
+        lastError = insertError;
+
+        if (!isMissingColumnError(insertError, column)) {
+          throw insertError;
+        }
       }
+
+      throw lastError || new Error('Unable to add task right now.');
     },
 
     async toggleTask(task) {
@@ -105,17 +188,31 @@ export const useTasks = (userId) => {
       }
 
       const nextCompleted = !task.completed;
+      const optimisticTask = {
+        ...task,
+        completed: nextCompleted,
+        completedDay: nextCompleted ? localDateKey() : null
+      };
 
-      const { error: updateError } = await supabase
+      setTasks((currentTasks) => upsertTaskInList(currentTasks, optimisticTask));
+
+      const { data, error: updateError } = await supabase
         .from('tasks')
         .update({
           completed: nextCompleted,
           completed_day: nextCompleted ? localDateKey() : null
         })
-        .eq('id', task.id);
+        .eq('id', task.id)
+        .select('*')
+        .single();
 
       if (updateError) {
+        setTasks((currentTasks) => upsertTaskInList(currentTasks, task));
         throw updateError;
+      }
+
+      if (data) {
+        setTasks((currentTasks) => upsertTaskInList(currentTasks, mapTask(data)));
       }
     },
 
@@ -124,15 +221,33 @@ export const useTasks = (userId) => {
         return;
       }
 
-      const { error: updateError } = await supabase
+      const currentTask = tasks.find((task) => task.id === taskId);
+
+      if (currentTask) {
+        setTasks((currentTasks) => upsertTaskInList(currentTasks, {
+          ...currentTask,
+          targetDate
+        }));
+      }
+
+      const { data, error: updateError } = await supabase
         .from('tasks')
         .update({
           target_date: targetDate
         })
-        .eq('id', taskId);
+        .eq('id', taskId)
+        .select('*')
+        .single();
 
       if (updateError) {
+        if (currentTask) {
+          setTasks((currentTasks) => upsertTaskInList(currentTasks, currentTask));
+        }
         throw updateError;
+      }
+
+      if (data) {
+        setTasks((currentTasks) => upsertTaskInList(currentTasks, mapTask(data)));
       }
     },
 
@@ -141,16 +256,22 @@ export const useTasks = (userId) => {
         return;
       }
 
+      const currentTask = tasks.find((task) => task.id === taskId);
+      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== taskId));
+
       const { error: deleteError } = await supabase
         .from('tasks')
         .delete()
         .eq('id', taskId);
 
       if (deleteError) {
+        if (currentTask) {
+          setTasks((currentTasks) => upsertTaskInList(currentTasks, currentTask));
+        }
         throw deleteError;
       }
     }
-  }), [userId]);
+  }), [taskTextColumn, tasks, userId]);
 
   return {
     tasks,
