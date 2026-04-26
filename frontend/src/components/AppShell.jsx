@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTheme } from '@context/ThemeContext';
+import { useSubjects } from '@context/SubjectContext';
+import OnboardingFlow from './OnboardingFlow';
 
 const NAV_ITEMS = [
   {
@@ -25,6 +28,18 @@ const NAV_ITEMS = [
         <path d="M4 7h.01" />
         <path d="M4 12h.01" />
         <path d="M4 17h.01" />
+      </svg>
+    )
+  },
+  {
+    to: '/subjects',
+    label: 'Subjects',
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 6.5A2.5 2.5 0 0 1 7.5 4H20v15.5A2.5 2.5 0 0 0 17.5 17H5z" />
+        <path d="M5 6.5V20" />
+        <path d="M9 8h7" />
+        <path d="M9 12h7" />
       </svg>
     )
   },
@@ -61,19 +76,35 @@ const ThemeButton = ({ mobile = false }) => {
       onClick={toggleTheme}
       aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
     >
-      <span>{theme === 'dark' ? 'LIGHT' : 'DARK'}</span>
+      <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
     </button>
   );
 };
 
-export const AppShell = ({ user, onLogout, authWarning = '' }) => {
+export const AppShell = ({ user, onLogout, onRefreshProfile, authWarning = '' }) => {
+  const { subjects, loading: subjectsLoading, refetchSubjects } = useSubjects();
+  const [onboardingComplete, setOnboardingComplete] = useState(() => (
+    typeof window !== 'undefined' && window.localStorage.getItem('clarity_onboarded') === 'true'
+  ));
+
+  useEffect(() => {
+    setOnboardingComplete(typeof window !== 'undefined' && window.localStorage.getItem('clarity_onboarded') === 'true');
+  }, [user?.uid]);
+
+  const showOnboarding = Boolean(
+    user?.uid
+    && !subjectsLoading
+    && subjects.length === 0
+    && !onboardingComplete
+  );
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
         <div className="sidebar-header">
           <div>
-            <div className="app-brand">NEXUS</div>
-            <div className="app-subtitle">EXECUTION BOARD</div>
+            <div className="app-brand">Clarity OS</div>
+            <div className="app-subtitle">Student execution system</div>
           </div>
           <ThemeButton />
         </div>
@@ -115,7 +146,7 @@ export const AppShell = ({ user, onLogout, authWarning = '' }) => {
 
       <div className="app-main">
         {authWarning && (
-          <div className="shell-warning section-note">
+          <div className="shell-warning section-note anim-enter">
             Profile sync issue: {authWarning}
           </div>
         )}
@@ -138,6 +169,17 @@ export const AppShell = ({ user, onLogout, authWarning = '' }) => {
           ))}
         </nav>
       </div>
+
+      {showOnboarding && (
+        <OnboardingFlow
+          user={user}
+          onRefreshProfile={onRefreshProfile}
+          onRefreshSubjects={refetchSubjects}
+          onComplete={() => {
+            setOnboardingComplete(true);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -33,10 +33,11 @@ export const Auth = ({ onSignup, onLogin, authWarning = '' }) => {
 
   return (
     <div className="auth-screen">
-      <div className="auth-card">
+      <div className="auth-card anim-enter">
         <div className="auth-header">
-          <div className="auth-brand">NEXUS</div>
-          <div className="auth-subtitle">SIGN IN TO EXECUTE</div>
+          <p className="page-kicker">Clarity OS</p>
+          <div className="auth-brand">Execution, not clutter.</div>
+          <div className="auth-subtitle">Plan classes, assignments, exams, and deadlines in one premium workspace.</div>
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>

@@ -6,6 +6,7 @@ import { AppShell } from '@components/AppShell';
 import Analytics from '@pages/Analytics';
 import Dashboard from '@pages/Dashboard';
 import Profile from '@pages/Profile';
+import Subjects from '@pages/Subjects';
 import Tasks from '@pages/Tasks';
 
 export default function App() {
@@ -17,13 +18,13 @@ export default function App() {
 }
 
 function AppContent() {
-  const { user, loading, signup, login, logout, error, configError } = useAuth();
+  const { user, loading, signup, login, logout, refreshProfile, error, configError } = useAuth();
 
   if (loading) {
     return (
       <div className="status-screen">
-        <div className="status-card status-card-compact">
-          <div className="status-brand">NEXUS</div>
+        <div className="status-card status-card-compact anim-enter">
+          <div className="status-brand">Clarity OS</div>
           <div className="status-copy">Loading...</div>
         </div>
       </div>
@@ -33,8 +34,8 @@ function AppContent() {
   if (configError) {
     return (
       <div className="status-screen">
-        <div className="status-card">
-          <div className="status-brand">NEXUS</div>
+        <div className="status-card anim-enter">
+          <div className="status-brand">Clarity OS</div>
           <div className="status-kicker">Configuration Error</div>
           <p className="status-copy">
             {configError}
@@ -67,9 +68,19 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route element={<AppShell user={user} onLogout={logout} authWarning={error} />}>
+      <Route
+        element={(
+          <AppShell
+            user={user}
+            onLogout={logout}
+            onRefreshProfile={refreshProfile}
+            authWarning={error}
+          />
+        )}
+      >
         <Route path="/" element={<Dashboard user={user} />} />
         <Route path="/tasks" element={<Tasks user={user} />} />
+        <Route path="/subjects" element={<Subjects user={user} />} />
         <Route path="/analytics" element={<Analytics user={user} />} />
         <Route path="/profile" element={<Profile user={user} onLogout={logout} />} />
         <Route path="*" element={<Navigate to="/" replace />} />

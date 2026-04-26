@@ -242,5 +242,22 @@ export const useAuth = () => {
     setLoading(false);
   };
 
-  return { user, loading, signup, login, logout, error, configError };
+  const refreshProfile = async () => {
+    const authLikeUser = user ? { ...user, id: user.id || user.uid } : null;
+
+    if (!authLikeUser?.id) {
+      return null;
+    }
+
+    const profile = await fetchProfile(authLikeUser.id);
+
+    if (profile) {
+      profileCache.set(authLikeUser.id, profile);
+    }
+
+    setUser(buildUser(authLikeUser, profile || {}));
+    return profile;
+  };
+
+  return { user, loading, signup, login, logout, refreshProfile, error, configError };
 };

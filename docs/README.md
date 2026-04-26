@@ -65,18 +65,10 @@ NEXUS is a Supabase-backed productivity app with a shared shell and four live ro
 - [ ] AI-powered task suggestions
 - [ ] Mobile app (React Native)
 
-## Contributing
-
-This is a portfolio project. Feel free to fork and customize for your own use.
-
-## License
-
-MIT License - feel free to use this project for learning and portfolio purposes.
-
 ## Support
 
 For issues or questions, please open an issue on GitHub.
 
 ---
 
-Built with ❤️ using React, Firebase, and modern web technologies.
+Built with ❤️ by Tushar Chandravadiya using React, Supabase , and modern web technologies.

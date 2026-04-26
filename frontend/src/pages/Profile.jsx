@@ -21,7 +21,7 @@ const Profile = ({ user, onLogout }) => {
   if (!user) {
     return (
       <section className="profile-view profile-view-empty">
-        <div className="profile-panel">
+        <div className="profile-panel anim-enter">
           <p className="page-kicker">Profile</p>
           <h1 className="profile-title">Sign in required</h1>
           <p className="profile-copy">You need an active session to access this page.</p>
@@ -70,10 +70,13 @@ const Profile = ({ user, onLogout }) => {
   };
 
   return (
-    <section className="profile-view">
-      <div className="profile-panel">
+    <section className="profile-view page">
+      <div className="profile-panel anim-enter">
         <p className="page-kicker">Profile</p>
         <h1 className="profile-title">Account</h1>
+        <p className="profile-copy">
+          Keep identity, appearance, and session controls in one clear system panel.
+        </p>
 
         <div className="profile-identity">
           <div className="profile-identity-avatar">{buildInitials(user.name, user.email)}</div>

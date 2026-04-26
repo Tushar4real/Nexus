@@ -1,4 +1,4 @@
-# Project Overview
+<!-- # Project Overview
 
 NEXUS is a Supabase-backed productivity application with four functional routes inside a shared shell: `/` for execution, `/tasks` for backlog planning, `/analytics` for output history, and `/profile` for account basics. It is built with React 18, Vite, React Router, and Supabase Auth/Postgres, with Supabase Realtime as the only data sync layer.
 
@@ -281,4 +281,4 @@ package.json                      # Root script proxy into frontend/
   - `frontend/src/pages/Profile.jsx`
 - Last known safe verification:
   - `npm run lint` passed
-  - `npm run build` passed
+  - `npm run build` passed -->

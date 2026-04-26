@@ -27,7 +27,9 @@ const mapTask = (task) => ({
   completed: task.completed,
   createdAt: task.created_at,
   targetDate: task.target_date,
-  completedDay: task.completed_day
+  completedDay: task.completed_day,
+  subjectId: task.subject_id || '',
+  estimatedMinutes: typeof task.estimated_minutes === 'number' ? task.estimated_minutes : 30
 });
 
 const sortTasks = (tasks) => [...tasks].sort((a, b) => {
@@ -132,7 +134,7 @@ export const useTasks = (userId) => {
   }, [userId]);
 
   const api = useMemo(() => ({
-    async addTask(text, weight) {
+    async addTask(text, weight, options = {}) {
       if (!supabase || !userId) {
         return;
       }
@@ -143,7 +145,11 @@ export const useTasks = (userId) => {
         weight,
         completed: false,
         target_date: localDateKey(),
-        completed_day: null
+        completed_day: null,
+        subject_id: options.subjectId || null,
+        estimated_minutes: Number.isFinite(Number(options.estimatedMinutes))
+          ? Number(options.estimatedMinutes)
+          : 30
       };
 
       const candidateColumns = [
