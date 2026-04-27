@@ -55,10 +55,15 @@ export default function FocusTimer({ userId, tasks, onClose }) {
   const [isSaving, setIsSaving] = useState(false);
   const intervalRef = useRef(null);
   const sessionSavedRef = useRef(false);
+  const phaseStartedAtRef = useRef(null);
+  const phaseDurationRef = useRef(POMODORO_WORK_SECONDS);
+  const studyOffsetRef = useRef(0);
   const phaseRef = useRef(phase);
   const remainingRef = useRef(remainingSeconds);
   const studySecondsRef = useRef(studySeconds);
   const modeRef = useRef(mode);
+  const isRunningRef = useRef(isRunning);
+  const viewRef = useRef(view);
 
   const todayKey = localDateKey();
 
@@ -97,6 +102,18 @@ export default function FocusTimer({ userId, tasks, onClose }) {
   }, [mode]);
 
   useEffect(() => {
+    phaseDurationRef.current = phaseDuration;
+  }, [phaseDuration]);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
+
+  useEffect(() => {
+    viewRef.current = view;
+  }, [view]);
+
+  useEffect(() => {
     if (selectedTaskId && !availableTasks.some((task) => task.id === selectedTaskId)) {
       setSelectedTaskId('');
     }
@@ -120,31 +137,65 @@ export default function FocusTimer({ userId, tasks, onClose }) {
   const finishSession = useCallback((finalStudySeconds) => {
     clearTimer();
     setIsRunning(false);
+    isRunningRef.current = false;
     setSummaryMinutes(getSummaryMinutes(finalStudySeconds));
     setView('summary');
   }, [clearTimer]);
 
-  const runTick = useCallback(() => {
-    const currentPhase = phaseRef.current;
-    const shouldCountStudy = currentPhase === 'work' || currentPhase === 'flow';
-    const nextStudySeconds = studySecondsRef.current + (shouldCountStudy ? 1 : 0);
-    const nextRemainingSeconds = Math.max(remainingRef.current - 1, 0);
-
-    setStudySeconds(nextStudySeconds);
-    setRemainingSeconds(nextRemainingSeconds);
-
-    if (nextRemainingSeconds > 0) {
+  const syncTimer = useCallback((timestamp = Date.now()) => {
+    if (!isRunningRef.current || viewRef.current !== 'running' || phaseStartedAtRef.current === null) {
       return;
     }
 
-    if (modeRef.current === 'pomodoro' && currentPhase === 'work') {
-      setPhase('break');
-      setPhaseDuration(POMODORO_BREAK_SECONDS);
-      setRemainingSeconds(POMODORO_BREAK_SECONDS);
+    let currentPhase = phaseRef.current;
+    let currentPhaseDuration = phaseDurationRef.current;
+    let currentPhaseStartedAt = phaseStartedAtRef.current;
+    let currentStudyOffset = studyOffsetRef.current;
+
+    while (true) {
+      const elapsedSeconds = Math.max(0, Math.floor((timestamp - currentPhaseStartedAt) / 1000));
+
+      if (elapsedSeconds < currentPhaseDuration) {
+        const nextRemainingSeconds = currentPhaseDuration - elapsedSeconds;
+        const nextStudySeconds = currentStudyOffset + (
+          currentPhase === 'work' || currentPhase === 'flow'
+            ? elapsedSeconds
+            : 0
+        );
+
+        remainingRef.current = nextRemainingSeconds;
+        studySecondsRef.current = nextStudySeconds;
+        setRemainingSeconds(nextRemainingSeconds);
+        setStudySeconds(nextStudySeconds);
+        return;
+      }
+
+      const phaseEndedAt = currentPhaseStartedAt + (currentPhaseDuration * 1000);
+
+      if (currentPhase === 'work' || currentPhase === 'flow') {
+        currentStudyOffset += currentPhaseDuration;
+        studyOffsetRef.current = currentStudyOffset;
+      }
+
+      if (modeRef.current === 'pomodoro' && currentPhase === 'work') {
+        currentPhase = 'break';
+        currentPhaseDuration = POMODORO_BREAK_SECONDS;
+        currentPhaseStartedAt = phaseEndedAt;
+        phaseRef.current = currentPhase;
+        phaseDurationRef.current = currentPhaseDuration;
+        phaseStartedAtRef.current = currentPhaseStartedAt;
+        setPhase(currentPhase);
+        setPhaseDuration(currentPhaseDuration);
+        continue;
+      }
+
+      remainingRef.current = 0;
+      studySecondsRef.current = currentStudyOffset;
+      setRemainingSeconds(0);
+      setStudySeconds(currentStudyOffset);
+      finishSession(currentStudyOffset);
       return;
     }
-
-    finishSession(nextStudySeconds);
   }, [finishSession]);
 
   useEffect(() => {
@@ -153,12 +204,37 @@ export default function FocusTimer({ userId, tasks, onClose }) {
       return undefined;
     }
 
-    intervalRef.current = window.setInterval(runTick, 1000);
+    syncTimer();
+    intervalRef.current = window.setInterval(() => {
+      syncTimer();
+    }, 1000);
 
     return () => {
       clearTimer();
     };
-  }, [isRunning, runTick, view, clearTimer]);
+  }, [isRunning, syncTimer, view, clearTimer]);
+
+  useEffect(() => {
+    if (!isRunning || view !== 'running') {
+      return undefined;
+    }
+
+    const handleVisibilityChange = () => {
+      syncTimer();
+    };
+
+    const handleWindowFocus = () => {
+      syncTimer();
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isRunning, syncTimer, view]);
 
   useEffect(() => () => {
     clearTimer();
@@ -186,12 +262,27 @@ export default function FocusTimer({ userId, tasks, onClose }) {
     setDidCompleteTask(false);
     setSaveError('');
     sessionSavedRef.current = false;
+    phaseRef.current = nextPhase;
+    phaseDurationRef.current = nextDuration;
+    phaseStartedAtRef.current = Date.now();
+    studyOffsetRef.current = 0;
+    remainingRef.current = nextDuration;
+    studySecondsRef.current = 0;
     setView('running');
     setIsRunning(true);
   };
 
   const handlePauseToggle = () => {
-    setIsRunning((currentValue) => !currentValue);
+    if (isRunningRef.current) {
+      syncTimer();
+      clearTimer();
+      setIsRunning(false);
+      return;
+    }
+
+    const elapsedSeconds = phaseDurationRef.current - remainingRef.current;
+    phaseStartedAtRef.current = Date.now() - (elapsedSeconds * 1000);
+    setIsRunning(true);
   };
 
   const handleEndSession = () => {
