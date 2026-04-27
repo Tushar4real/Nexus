@@ -343,9 +343,12 @@ const Dashboard = ({ user }) => {
                 <div className="exam-strip-body">
                   <div className="exam-strip-topline">
                     <strong className="exam-strip-name">{subject.name}</strong>
-                    <span className={`exam-strip-status urgency-${subject.urgencyTone}`}>
-                      {subject.statusLabel}
-                    </span>
+                    <div className="exam-strip-meta">
+                      <span className={`exam-strip-status urgency-${subject.urgencyTone} mono`}>
+                        {subject.statusLabel}
+                      </span>
+                      <span className="exam-progress-label mono">{subject.readiness}% ready</span>
+                    </div>
                   </div>
                   <div className="exam-progress-row">
                     <div className="exam-progress-track">
@@ -354,7 +357,6 @@ const Dashboard = ({ user }) => {
                         style={{ width: `${subject.readiness}%` }}
                       />
                     </div>
-                    <span className="exam-progress-label">{subject.readiness}% ready</span>
                   </div>
                 </div>
               </article>

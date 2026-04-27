@@ -18,10 +18,10 @@ const buildUser = (authUser, profile = {}) => ({
   ...authUser,
   ...profile,
   uid: authUser.id,
-  name: profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'User',
+  name: profile.display_name || profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'User',
   email: profile.email || authUser.email || '',
   avatar: profile.avatar || buildAvatar(
-    profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name,
+    profile.display_name || profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name,
     profile.email || authUser.email || ''
   )
 });
@@ -210,15 +210,24 @@ export const useAuth = () => {
     }
 
     if (data.user) {
+      const cachedProfile = profileCache.get(data.user.id) || await fetchProfile(data.user.id);
+
+      if (cachedProfile) {
+        profileCache.set(data.user.id, cachedProfile);
+      }
+
       setUser((currentUser) => currentUser?.uid === data.user.id
-        ? currentUser
-        : buildUser(data.user, profileCache.get(data.user.id) || {}));
+        ? buildUser(data.user, cachedProfile || {})
+        : buildUser(data.user, cachedProfile || {}));
       setError(null);
       setConfigError(null);
       setLoading(false);
     }
 
-    return data;
+    return {
+      ...data,
+      profile: profileCache.get(data.user?.id) || null
+    };
   };
 
   const logout = async () => {

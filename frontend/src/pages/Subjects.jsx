@@ -154,6 +154,7 @@ const Subjects = ({ user }) => {
   const { tasks, loading: tasksLoading, error: tasksError } = useTasks(user?.uid);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingSubjectId, setEditingSubjectId] = useState('');
+  const [openMenuSubjectId, setOpenMenuSubjectId] = useState('');
   const [saving, setSaving] = useState(false);
   const [actionError, setActionError] = useState('');
 
@@ -233,6 +234,7 @@ const Subjects = ({ user }) => {
     try {
       await deleteSubject(subjectId);
       await refetchSubjects();
+      setOpenMenuSubjectId('');
       if (editingSubjectId === subjectId) {
         setEditingSubjectId('');
       }
@@ -318,6 +320,7 @@ const Subjects = ({ user }) => {
           ) : (
             subjects.map((subject, index) => {
               const isEditing = editingSubjectId === subject.id;
+              const isMenuOpen = openMenuSubjectId === subject.id;
               const daysUntil = getDaysUntil(subject.examDate);
               const urgencyTone = getUrgencyTone(daysUntil);
 
@@ -332,9 +335,48 @@ const Subjects = ({ user }) => {
                     <div className="subject-card-header">
                       <div>
                         <h2 className="subject-card-title">{subject.name}</h2>
-                        <p className={`subject-card-date${daysUntil === null ? ' muted' : ` tone-${urgencyTone}`}`}>
+                        <p className={`subject-card-date mono${daysUntil === null ? ' muted' : ` tone-${urgencyTone}`}`}>
                           {getExamCopy(daysUntil)}
                         </p>
+                      </div>
+                      <div className="subject-card-menu mobile-only">
+                        <button
+                          type="button"
+                          className="subject-card-menu-trigger"
+                          aria-label={`More actions for ${subject.name}`}
+                          aria-expanded={isMenuOpen}
+                          onClick={() => {
+                            setOpenMenuSubjectId((current) => (current === subject.id ? '' : subject.id));
+                          }}
+                        >
+                          <span aria-hidden="true">⋮</span>
+                        </button>
+                        {isMenuOpen && (
+                          <div className="subject-card-menu-dropdown card-raised">
+                            <button
+                              type="button"
+                              className="subject-card-menu-action"
+                              onClick={() => {
+                                setShowCreateForm(false);
+                                setEditingSubjectId(isEditing ? '' : subject.id);
+                                setOpenMenuSubjectId('');
+                              }}
+                              disabled={saving}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="subject-card-menu-action subject-card-menu-action-danger"
+                              onClick={() => {
+                                void handleDelete(subject.id);
+                              }}
+                              disabled={saving}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <div className="subject-card-actions">
                         <button
@@ -408,21 +450,21 @@ const Subjects = ({ user }) => {
                           ))}
                         </div>
                       )}
-                    </section>
 
-                    {isEditing && (
-                      <SubjectForm
-                        initialValues={{
-                          name: subject.name,
-                          color: subject.color,
-                          examDate: getExamDateValue(subject.examDate),
-                          description: subject.description || ''
-                        }}
-                        saving={saving}
-                        onCancel={() => setEditingSubjectId('')}
-                        onSave={(form) => handleUpdate(subject.id, form)}
-                      />
-                    )}
+                      {isEditing && (
+                        <SubjectForm
+                          initialValues={{
+                            name: subject.name,
+                            color: subject.color,
+                            examDate: getExamDateValue(subject.examDate),
+                            description: subject.description || ''
+                          }}
+                          saving={saving}
+                          onCancel={() => setEditingSubjectId('')}
+                          onSave={(form) => handleUpdate(subject.id, form)}
+                        />
+                      )}
+                    </section>
                   </div>
                 </article>
               );

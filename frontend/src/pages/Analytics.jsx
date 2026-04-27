@@ -528,7 +528,10 @@ const Analytics = ({ user }) => {
                       <div>
                         <h3 className="exam-readiness-name">{card.name}</h3>
                       </div>
-                      <span className={`exam-strip-status urgency-${card.urgencyTone}`}>{card.statusLabel}</span>
+                      <div className="exam-readiness-meta">
+                        <span className={`exam-strip-status urgency-${card.urgencyTone} mono`}>{card.statusLabel}</span>
+                        <span className="exam-progress-label mono">{`${card.readinessPercent}% ready`}</span>
+                      </div>
                     </div>
 
                     <div className="exam-readiness-pills">
@@ -544,7 +547,6 @@ const Analytics = ({ user }) => {
                           style={{ width: `${card.readinessPercent}%` }}
                         />
                       </div>
-                      <span className="exam-progress-label mono">{`${card.readinessPercent}% ready`}</span>
                     </div>
                   </article>
                 ))}

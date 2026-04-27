@@ -90,7 +90,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
   line-height: 1.45;
   overflow-x: hidden;
 }
@@ -1535,6 +1535,15 @@ svg {
   gap: 16px;
 }
 
+.exam-readiness-meta,
+.exam-strip-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .exam-readiness-name {
   margin: 0;
   font-size: 1rem;
@@ -2252,6 +2261,64 @@ svg {
   justify-content: flex-start;
 }
 
+.subject-card-menu {
+  position: relative;
+  margin-left: auto;
+}
+
+.subject-card-menu[open] {
+  z-index: 3;
+}
+
+.subject-card-menu-trigger {
+  list-style: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-raised);
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.subject-card-menu-trigger::-webkit-details-marker {
+  display: none;
+}
+
+.subject-card-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 132px;
+  padding: 6px;
+  display: grid;
+  gap: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.subject-card-menu-action {
+  min-height: 36px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+}
+
+.subject-card-menu-action-danger {
+  color: var(--critical);
+}
+
 .insight-card h3,
 .status-box-title {
   margin: 10px 0 0;
@@ -2548,6 +2615,10 @@ svg {
     grid-template-columns: 1fr;
   }
 
+  .subject-card-menu.mobile-only {
+    display: none;
+  }
+
   .subject-task-row {
     flex-direction: column;
   }
@@ -2557,11 +2628,487 @@ svg {
   }
 }
 
+@media (max-width: 767px) {
+  .app-shell {
+    padding: 12px 12px 0;
+  }
+
+  .app-main {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+
+  .app-content {
+    padding-bottom: 4px;
+  }
+
+  .page,
+  .card,
+  .status-card,
+  .auth-card,
+  .profile-panel,
+  .task-panel,
+  .planning-section,
+  .spotlight-card,
+  .insight-card,
+  .analytics-stat {
+    padding: 16px;
+  }
+
+  .mobile-only.theme-toggle {
+    min-height: 36px;
+    padding: 0 12px;
+    align-self: flex-end;
+    font-size: 0.8rem;
+    line-height: 1.1;
+  }
+
+  .bottom-nav {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    gap: 8px;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-radius: 0;
+    background: var(--bg-card);
+    border: 0;
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 -12px 28px -24px rgba(24, 26, 32, 0.4);
+  }
+
+  .dark .bottom-nav {
+    background: var(--bg-card);
+  }
+
+  .bottom-nav-link {
+    min-height: 48px;
+    border-radius: 10px;
+  }
+
+  .page-header,
+  .dashboard-header-bar,
+  .dashboard-section-head,
+  .section-head,
+  .exam-readiness-header,
+  .exam-strip-topline,
+  .exam-progress-row,
+  .subject-card-header,
+  .subject-task-panel-head {
+    gap: 10px;
+  }
+
+  .dashboard-header-bar {
+    align-items: flex-start;
+    padding-top: 0;
+  }
+
+  .dashboard-header-title {
+    font-size: clamp(1.7rem, 9vw, 2rem);
+    line-height: 0.98;
+  }
+
+  .page-title {
+    font-size: clamp(1.65rem, 8vw, 2rem);
+    line-height: 0.98;
+  }
+
+  .page-subtitle,
+  .dashboard-header-date,
+  .subject-card-date,
+  .subject-card-description,
+  .exam-strip-status,
+  .exam-progress-label,
+  .exam-readiness-pill,
+  .subject-task-date,
+  .subject-task-time,
+  .stats-label {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .dashboard-view,
+  .planning-view,
+  .analytics-view,
+  .subjects-view,
+  .profile-view,
+  .page {
+    gap: 14px;
+  }
+
+  .dashboard-empty-card,
+  .stats-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .exam-strip {
+    gap: 10px;
+  }
+
+  .exam-strip-card,
+  .exam-readiness-card,
+  .subject-card {
+    border-radius: 10px;
+  }
+
+  .exam-strip-card {
+    flex-basis: 100%;
+  }
+
+  .exam-strip-body {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .exam-strip-name,
+  .exam-readiness-name,
+  .subject-card-title {
+    font-size: 0.98rem;
+    line-height: 1.05;
+  }
+
+  .exam-strip-meta,
+  .exam-readiness-meta {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .exam-strip-topline,
+  .exam-readiness-header {
+    align-items: flex-start;
+  }
+
+  .exam-progress-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .exam-readiness-card {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .exam-readiness-pills {
+    gap: 8px;
+  }
+
+  .exam-readiness-pill {
+    min-height: 28px;
+    padding: 0 8px;
+  }
+
+  .subject-grid {
+    gap: 12px;
+  }
+
+  .subject-card-body,
+  .subject-form {
+    gap: 12px;
+  }
+
+  .subject-card-body {
+    padding: 12px;
+  }
+
+  .subject-card-description {
+    margin-top: 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .subject-card-actions {
+    display: none;
+  }
+
+  .subject-card-menu.mobile-only {
+    display: inline-flex;
+  }
+
+  .subject-card-header {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .subject-card-header > div:first-child {
+    min-width: 0;
+  }
+
+  .subject-task-panel {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .subject-task-panel-count {
+    min-width: 28px;
+    min-height: 28px;
+    padding: 0 8px;
+  }
+
+  .subject-task-list {
+    margin-top: 10px;
+    gap: 8px;
+  }
+
+  .subject-task-row {
+    padding: 8px 0;
+    gap: 8px;
+  }
+
+  .subject-task-copy {
+    gap: 4px;
+  }
+
+  .subject-task-title,
+  .subject-task-panel-title {
+    line-height: 1.1;
+  }
+
+  .subject-task-status {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+  }
+
+  .dashboard-count-badge,
+  .stats-value,
+  .subject-task-panel-count,
+  .exam-strip-status,
+  .exam-progress-label,
+  .subject-card-date {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --space-sm: 12px;
+    --space-md: 16px;
+    --r-md: 10px;
+    --r-lg: 16px;
+  }
+
+  body,
+  button,
+  input,
+  textarea,
+  select {
+    font-size: 14px;
+  }
+
+  .mono,
+  .pill,
+  .exam-readiness-pill,
+  .exam-strip-status,
+  .exam-progress-label,
+  .subject-card-date,
+  .subject-task-date,
+  .subject-task-status,
+  .dashboard-count-badge,
+  .subject-task-panel-count {
+    font-size: 11px;
+  }
+
+  .card,
+  .card-raised,
+  .status-card,
+  .auth-card,
+  .shell-warning,
+  .planning-task-card,
+  .metric-box,
+  .analytics-stat,
+  .profile-panel,
+  .task-panel,
+  .planning-section,
+  .spotlight-card,
+  .insight-card,
+  .status-box,
+  .dashboard-empty-card,
+  .exam-strip-card,
+  .stats-card,
+  .exam-readiness-card,
+  .subject-card,
+  .subject-task-panel {
+    padding: var(--space-sm, 12px);
+    border-radius: var(--r-md, 10px);
+  }
+
+  .app-shell,
+  .app-main,
+  .app-content {
+    margin-left: 0;
+  }
+
+  .app-main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  .app-content,
+  .page {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  .bottom-nav {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    background: var(--bg-card);
+    border: 0;
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    box-shadow: 0 -12px 28px -24px rgba(24, 26, 32, 0.4);
+  }
+
+  .dark .bottom-nav {
+    background: var(--bg-card);
+  }
+
+  .page-header,
+  .dashboard-header-bar,
+  .dashboard-section-head,
+  .section-head {
+    gap: 10px;
+  }
+
+  .dashboard-header-title,
+  .page-title {
+    line-height: 1;
+  }
+
+  .dashboard-header-date,
+  .page-subtitle,
+  .subject-card-description,
+  .subject-task-time,
+  .stats-label {
+    font-size: 14px;
+  }
+
+  .exam-strip,
+  .exam-readiness-list,
+  .subject-grid {
+    gap: var(--space-sm, 12px);
+  }
+
+  .exam-strip-body,
+  .subject-card-body,
+  .subject-form {
+    gap: var(--space-sm, 12px);
+    padding: var(--space-sm, 12px);
+  }
+
+  .exam-strip-topline,
+  .exam-readiness-header,
+  .exam-progress-row,
+  .subject-card-header,
+  .subject-task-panel-head {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .exam-strip-meta,
+  .exam-readiness-meta {
+    width: auto;
+    min-width: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .exam-progress-row {
+    display: flex;
+  }
+
+  .exam-readiness-card {
+    gap: var(--space-sm, 12px);
+  }
+
+  .exam-readiness-pills {
+    gap: 6px;
+  }
+
+  .exam-readiness-pill {
+    min-height: 24px;
+    padding: 0 8px;
+  }
+
+  .subject-card {
+    position: relative;
+  }
+
+  .subject-card-actions {
+    display: none;
+  }
+
+  .subject-card-menu.mobile-only {
+    display: inline-flex;
+    position: absolute;
+    top: var(--space-sm, 12px);
+    right: var(--space-sm, 12px);
+    z-index: 5;
+  }
+
+  .subject-card-menu-trigger {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-md, 10px);
+  }
+
+  .subject-card-menu-dropdown {
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 120px;
+    padding: 6px;
+  }
+
+  .subject-card-menu-dropdown.card-raised {
+    background: var(--bg-raised);
+    border-color: var(--border-light);
+    border-radius: var(--r-md, 10px);
+  }
+
+  .subject-card-menu-action {
+    min-height: 32px;
+    font-size: 14px;
+  }
+
+  .subject-card-header {
+    align-items: flex-start;
+    padding-right: 40px;
+  }
+
+  .subject-card-header > div:first-child {
+    min-width: 0;
+  }
+
+  .subject-card-title,
+  .exam-strip-name,
+  .exam-readiness-name {
+    line-height: 1.05;
+  }
+
+  .subject-task-list {
+    gap: 8px;
+  }
+
+  .subject-task-row {
+    gap: 8px;
+    padding: 8px 0;
   }
 }

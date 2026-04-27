@@ -67,16 +67,19 @@ const NAV_ITEMS = [
 ];
 
 const ThemeButton = ({ mobile = false }) => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeMode, toggleTheme } = useTheme();
+  const label = themeMode === 'system'
+    ? `Theme: System (${theme === 'dark' ? 'Dark' : 'Light'})`
+    : `Theme: ${themeMode === 'dark' ? 'Dark' : 'Light'}`;
 
   return (
     <button
       type="button"
       className={`theme-toggle${mobile ? ' mobile-only' : ''}`}
       onClick={toggleTheme}
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      aria-label="Cycle theme mode"
     >
-      <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+      <span>{label}</span>
     </button>
   );
 };

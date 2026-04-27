@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@hooks/useAuth';
 import { Auth } from '@components/Auth';
 import { ThemeProvider } from '@context/ThemeContext';
@@ -19,6 +20,45 @@ export default function App() {
 
 function AppContent() {
   const { user, loading, signup, login, logout, refreshProfile, error, configError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const resolveDefaultRoute = (defaultPage) => {
+    if (defaultPage === 'tasks') {
+      return '/tasks';
+    }
+
+    if (defaultPage === 'subjects') {
+      return '/subjects';
+    }
+
+    if (defaultPage === 'analytics') {
+      return '/analytics';
+    }
+
+    return '/';
+  };
+
+  const handleLogin = async (email, password) => {
+    const result = await login(email, password);
+    const nextRoute = resolveDefaultRoute(result?.profile?.default_page);
+    navigate(nextRoute, { replace: true });
+    return result;
+  };
+
+  const handleSignup = async (email, password, name) => {
+    const nextUser = await signup(email, password, name);
+    navigate('/', { replace: true });
+    return nextUser;
+  };
+
+  useEffect(() => {
+    if (!user || location.pathname !== '/login') {
+      return;
+    }
+
+    navigate(resolveDefaultRoute(user.default_page), { replace: true });
+  }, [location.pathname, navigate, user]);
 
   if (loading) {
     return (
@@ -63,7 +103,7 @@ function AppContent() {
   }
 
   if (!user) {
-    return <Auth onSignup={signup} onLogin={login} authWarning={error} />;
+    return <Auth onSignup={handleSignup} onLogin={handleLogin} authWarning={error} />;
   }
 
   return (
@@ -82,7 +122,7 @@ function AppContent() {
         <Route path="/tasks" element={<Tasks user={user} />} />
         <Route path="/subjects" element={<Subjects user={user} />} />
         <Route path="/analytics" element={<Analytics user={user} />} />
-        <Route path="/profile" element={<Profile user={user} onLogout={logout} />} />
+        <Route path="/profile" element={<Profile user={user} onLogout={logout} onRefreshProfile={refreshProfile} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
