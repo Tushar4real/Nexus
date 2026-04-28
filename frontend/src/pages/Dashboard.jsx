@@ -506,7 +506,7 @@ const Dashboard = ({ user }) => {
           </article>
           <article className="stats-card">
             <span className="stats-label">This Week</span>
-            <strong className="stats-value">{completedThisWeek} tasks completed</strong>
+            <strong className="stats-value">{`${completedThisWeek} tasks`}</strong>
           </article>
           <article className="stats-card">
             <span className="stats-label">Focus Time</span>
@@ -517,7 +517,7 @@ const Dashboard = ({ user }) => {
                 Something went wrong loading focus time. Please refresh.
               </p>
             ) : (
-              <strong className="stats-value">{`${formatHours(focusMinutes)} hrs this week`}</strong>
+              <strong className="stats-value">{`${formatHours(focusMinutes)} hrs`}</strong>
             )}
           </article>
         </div>
