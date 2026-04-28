@@ -257,7 +257,7 @@ const Subjects = ({ user }) => {
         </div>
         <button
           type="button"
-          className="planning-action planning-action-primary"
+          className="planning-action planning-action-primary subject-create-button"
           onClick={() => {
             setEditingSubjectId('');
             setShowCreateForm((current) => !current);
@@ -335,7 +335,7 @@ const Subjects = ({ user }) => {
                     <div className="subject-card-header">
                       <div>
                         <h2 className="subject-card-title">{subject.name}</h2>
-                        <p className={`subject-card-date mono${daysUntil === null ? ' muted' : ` tone-${urgencyTone}`}`}>
+                        <p className={`subject-card-date${daysUntil === null ? ' muted' : ` tone-${urgencyTone}`}`}>
                           {getExamCopy(daysUntil)}
                         </p>
                       </div>

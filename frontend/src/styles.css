@@ -2392,20 +2392,20 @@ svg {
 .subject-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  gap: var(--space-gutter);
 }
 
 .subject-card {
   position: relative;
   overflow: hidden;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: var(--shadow-card);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
 }
 
 .subject-card-strip {
-  height: 6px;
+  height: 4px;
   background: var(--subject-color);
 }
 
@@ -2417,7 +2417,7 @@ svg {
 }
 
 .subject-card-body {
-  padding: 20px;
+  padding: var(--space-lg);
 }
 
 .subject-card-header {
@@ -2429,9 +2429,11 @@ svg {
 
 .subject-card-title {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-family: var(--font-heading);
+  font-size: var(--text-h2-size);
+  font-weight: var(--text-h2-weight);
+  letter-spacing: var(--text-h2-tracking);
+  color: var(--color-text);
 }
 
 .subject-card-date,
@@ -2439,16 +2441,37 @@ svg {
   margin: 10px 0 0;
 }
 
+.subject-card-date {
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
+  text-transform: uppercase;
+}
+
 .subject-card-date.muted,
 .subject-card-description {
-  color: var(--text-muted);
+  color: var(--color-text-muted);
+}
+
+.subject-card-date.tone-safe {
+  color: var(--color-primary-light);
+}
+
+.subject-card-date.tone-mid,
+.subject-card-date.tone-high {
+  color: var(--color-tertiary);
+}
+
+.subject-card-date.tone-critical {
+  color: var(--color-error);
 }
 
 .subject-task-panel {
   padding: 16px;
-  border-radius: 14px;
-  background: var(--bg-raised);
-  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-high);
+  border: 1px solid var(--color-border);
 }
 
 .subject-task-panel-head {
@@ -2471,10 +2494,10 @@ svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  color: var(--text);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-highest);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
 }
 
 .subject-task-empty {
@@ -2522,7 +2545,8 @@ svg {
 
 .subject-task-title {
   margin: 0;
-  color: var(--text);
+  color: var(--color-text);
+  font-family: var(--font-body);
   font-size: 0.92rem;
   font-weight: 600;
 }
@@ -2536,8 +2560,9 @@ svg {
 
 .subject-task-date,
 .subject-task-time {
-  color: var(--text-muted);
-  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm-size);
 }
 
 .subject-task-status {
@@ -2546,16 +2571,16 @@ svg {
   padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
-  color: var(--accent);
+  border-radius: var(--radius-full);
+  background: rgba(195, 192, 255, 0.12);
+  color: var(--color-primary-light);
   font-size: 0.76rem;
   font-weight: 700;
 }
 
 .subject-task-status.completed {
-  background: color-mix(in srgb, var(--safe) 10%, transparent);
-  color: var(--safe);
+  background: var(--color-surface-highest);
+  color: var(--color-text-muted);
 }
 
 .subject-card-actions,
@@ -2622,6 +2647,34 @@ svg {
 
 .subject-card-menu-action-danger {
   color: var(--critical);
+}
+
+.subject-card-actions .planning-action {
+  border-radius: var(--radius-default);
+  border: 1px solid var(--color-border);
+  box-shadow: none;
+}
+
+.subject-card-actions .planning-action-primary {
+  background: transparent;
+  color: var(--color-primary-light);
+}
+
+.subject-card-actions .planning-action-secondary {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.subject-create-button {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-default);
+}
+
+.subject-create-button:hover {
+  background: #6366f1;
+  border-color: #6366f1;
 }
 
 .insight-card h3,
