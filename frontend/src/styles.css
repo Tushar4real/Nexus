@@ -1288,21 +1288,33 @@ svg {
 
 .planning-section-title {
   margin: 10px 0 0;
-  font-size: 1.2rem;
+  font-family: var(--font-heading);
+  font-size: var(--text-h2-size);
+  font-weight: var(--text-h2-weight);
+  letter-spacing: var(--text-h2-tracking);
+  color: var(--color-text);
 }
 
 .planning-section {
-  padding: 18px 20px;
+  padding: var(--space-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
 }
 
 .planning-toolbar {
   margin-bottom: 22px;
-  padding: 18px 20px;
+  padding: var(--space-lg);
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
 }
 
 .planning-filter-group {
@@ -1319,10 +1331,11 @@ svg {
 }
 
 .planning-filter-label {
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
   text-transform: uppercase;
 }
 
@@ -1333,24 +1346,23 @@ svg {
 .planning-group-toggle {
   min-height: 44px;
   padding: 0 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-card);
-  color: var(--text);
+  border-radius: var(--radius-default);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-high);
+  color: var(--color-text);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .planning-group-toggle:hover {
-  transform: translateY(-1px);
-  border-color: var(--border);
+  border-color: var(--color-primary);
 }
 
 .planning-group-toggle-active {
-  border-color: color-mix(in srgb, var(--accent) 42%, var(--border-light));
-  background: color-mix(in srgb, var(--accent) 10%, var(--bg-card));
+  border-color: var(--color-primary);
+  background: var(--color-surface-highest);
 }
 
 .planning-empty {
@@ -1436,21 +1448,27 @@ svg {
 
 .planning-subject-group-title {
   margin: 0;
-  font-size: 0.98rem;
-  font-weight: 600;
+  font-family: var(--font-label);
+  font-size: var(--text-body-sm-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
 }
 
 .planning-task-card {
-  padding: 12px 14px;
+  padding: var(--space-md);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 14px;
   align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
 }
 
 .planning-task-card-has-subject {
-  border-left: 4px solid var(--planning-task-subject-color);
-  padding-left: 10px;
+  border-left: 3px solid var(--planning-task-subject-color);
+  padding-left: calc(var(--space-md) - 3px);
 }
 
 .planning-task-checkline,
@@ -1482,14 +1500,17 @@ svg {
 
 .planning-task-title {
   margin: 0;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: var(--text-body-md-size);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text);
 }
 
 .planning-task-subject {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-label);
+  font-size: var(--text-body-sm-size);
 }
 
 .planning-task-actions {
@@ -1514,13 +1535,94 @@ svg {
 }
 
 .planning-task-checkcopy {
-  color: var(--text-sub);
+  color: var(--color-text-muted);
   font-size: 0.78rem;
 }
 
 .planning-task-estimate {
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   font-size: 0.8rem;
+}
+
+.planning-task-meta {
+  color: var(--color-text-muted);
+}
+
+.planning-view .page-kicker,
+.planning-section .section-label {
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+.planning-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h1-size);
+  font-weight: var(--text-h1-weight);
+  letter-spacing: var(--text-h1-tracking);
+  color: var(--color-text);
+}
+
+.planning-subtitle {
+  font-family: var(--font-body);
+  color: var(--color-text-muted);
+}
+
+.planning-meta span {
+  background: var(--color-surface-highest);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+}
+
+.planning-section-count {
+  background: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-full);
+  color: var(--color-on-primary);
+}
+
+.planning-task-side .urgency-tag {
+  border-radius: var(--radius-full);
+}
+
+.planning-task-side .urgency-tag.urgency-high,
+.planning-task-side .urgency-tag.urgency-critical {
+  color: var(--color-error);
+  background: rgba(255, 180, 171, 0.12);
+  border-color: rgba(255, 180, 171, 0.24);
+}
+
+.planning-task-side .urgency-tag.urgency-mid {
+  color: var(--color-tertiary);
+  background: rgba(255, 182, 149, 0.12);
+  border-color: rgba(255, 182, 149, 0.24);
+}
+
+.planning-task-side .urgency-tag.urgency-safe {
+  color: var(--color-primary-light);
+  background: rgba(195, 192, 255, 0.12);
+  border-color: rgba(195, 192, 255, 0.24);
+}
+
+.planning-action {
+  border-radius: var(--radius-default);
+  box-shadow: none;
+}
+
+.planning-action-primary {
+  background: transparent;
+  color: var(--color-primary-light);
+  border: 1px solid var(--color-border);
+}
+
+.planning-action-secondary {
+  background: var(--color-surface-high);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
 }
 
 .analytics-card {
