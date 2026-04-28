@@ -437,7 +437,7 @@ const Analytics = ({ user }) => {
                         }}
                       />
                     </div>
-                    <span className="subject-balance-meta mono">
+                    <span className="subject-balance-meta">
                       {`${row.tasksCompleted} task${row.tasksCompleted === 1 ? '' : 's'} · ${formatHours(row.minutes)} hrs`}
                     </span>
                   </div>
@@ -469,6 +469,12 @@ const Analytics = ({ user }) => {
                       : 0;
                     const x = 34 + index * chartStep;
                     const y = chartBaseY - height;
+                    const isHighlighted = maxCompletionCount > 0 && bar.count === maxCompletionCount;
+                    const barToneClass = bar.count === 0
+                      ? ' is-empty'
+                      : isHighlighted
+                        ? ' is-highlighted'
+                        : ' is-completed';
 
                     return (
                       <g key={bar.dayKey}>
@@ -477,8 +483,8 @@ const Analytics = ({ user }) => {
                           y={y}
                           width={barWidth}
                           height={height}
-                          rx="10"
-                          className="completion-chart-bar"
+                          rx="2"
+                          className={`completion-chart-bar${barToneClass}`}
                         />
                         <text x={x + barWidth / 2} y={chartBaseY + 20} textAnchor="middle" className="completion-chart-label">
                           {bar.label}
@@ -529,8 +535,8 @@ const Analytics = ({ user }) => {
                         <h3 className="exam-readiness-name">{card.name}</h3>
                       </div>
                       <div className="exam-readiness-meta">
-                        <span className={`exam-strip-status urgency-${card.urgencyTone} mono`}>{card.statusLabel}</span>
-                        <span className="exam-progress-label mono">{`${card.readinessPercent}% ready`}</span>
+                        <span className={`exam-strip-status urgency-${card.urgencyTone}`}>{card.statusLabel}</span>
+                        <span className="exam-progress-label">{`${card.readinessPercent}% ready`}</span>
                       </div>
                     </div>
 
@@ -544,7 +550,12 @@ const Analytics = ({ user }) => {
                       <div className="exam-progress-track">
                         <div
                           className={`exam-progress-fill urgency-${card.urgencyTone}`}
-                          style={{ width: `${card.readinessPercent}%` }}
+                          style={{
+                            width: `${card.readinessPercent}%`,
+                            backgroundColor: card.urgencyTone === 'high' || card.urgencyTone === 'critical'
+                              ? 'var(--color-error)'
+                              : card.color
+                          }}
                         />
                       </div>
                     </div>

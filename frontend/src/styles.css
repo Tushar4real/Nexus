@@ -1627,6 +1627,10 @@ svg {
 
 .analytics-card {
   padding: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
 }
 
 .analytics-empty-state {
@@ -1671,10 +1675,10 @@ svg {
 
 .subject-balance-bar-track {
   width: 100%;
-  height: 14px;
+  height: var(--progress-bar-height);
   border-radius: 999px;
   overflow: hidden;
-  background: var(--bg-raised);
+  background: var(--color-surface-high);
 }
 
 .subject-balance-bar-fill {
@@ -1685,7 +1689,8 @@ svg {
 }
 
 .subject-balance-meta {
-  color: var(--text-sub);
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
   white-space: nowrap;
 }
 
@@ -1701,30 +1706,39 @@ svg {
 }
 
 .completion-chart-axis {
-  stroke: var(--border);
+  stroke: var(--color-border);
   stroke-width: 1.5;
 }
 
-.completion-chart-bar {
-  fill: var(--accent);
+.completion-chart-bar.is-empty {
+  fill: var(--color-surface-high);
+}
+
+.completion-chart-bar.is-completed {
+  fill: #22c55e;
+}
+
+.completion-chart-bar.is-highlighted {
+  fill: var(--color-primary);
 }
 
 .completion-chart-label,
 .completion-chart-value {
-  fill: var(--text-muted);
-  font-size: 12px;
+  fill: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-body-sm-size);
 }
 
 .completion-chart-value {
-  fill: var(--accent);
+  fill: var(--color-text-muted);
   font-weight: 700;
 }
 
 .exam-readiness-card {
   padding: 18px;
-  border-radius: 16px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-raised);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-high);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -1748,7 +1762,11 @@ svg {
 
 .exam-readiness-name {
   margin: 0;
-  font-size: 1rem;
+  font-family: var(--font-heading);
+  font-size: var(--text-h3-size);
+  font-weight: var(--text-h3-weight);
+  letter-spacing: var(--text-h3-tracking);
+  color: var(--color-text);
 }
 
 .exam-readiness-pills {
@@ -1762,10 +1780,10 @@ svg {
   padding: 0 12px;
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--border-light);
-  background: var(--bg-card);
-  color: var(--text-sub);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-highest);
+  color: var(--color-text-muted);
   font-size: 0.82rem;
 }
 
@@ -1781,24 +1799,65 @@ svg {
 
 .heatmap-cell {
   aspect-ratio: 1;
-  border-radius: 8px;
-  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
 }
 
 .heatmap-none {
-  background: var(--bg-tertiary);
+  background: var(--color-surface-high);
 }
 
 .heatmap-light {
-  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: rgba(79, 70, 229, 0.24);
 }
 
 .heatmap-mid {
-  background: color-mix(in srgb, var(--accent) 60%, transparent);
+  background: rgba(79, 70, 229, 0.5);
 }
 
 .heatmap-strong {
-  background: var(--accent);
+  background: rgba(79, 70, 229, 0.82);
+}
+
+.analytics-view .section-label {
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.analytics-view .section-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-h2-size);
+  font-weight: var(--text-h2-weight);
+  letter-spacing: var(--text-h2-tracking);
+  color: var(--color-text);
+}
+
+.analytics-stat {
+  background: var(--color-surface-high);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+}
+
+.analytics-stat-label {
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.analytics-stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-metric-size);
+  font-weight: var(--text-metric-weight);
+  letter-spacing: var(--text-metric-tracking);
+  color: var(--color-text);
 }
 
 .analytics-view,
