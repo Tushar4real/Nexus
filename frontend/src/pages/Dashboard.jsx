@@ -376,7 +376,7 @@ const Dashboard = ({ user }) => {
         )}
       </section>
 
-      <section className="dashboard-section anim-enter" style={{ '--delay': '0.12s' }}>
+      <section className="dashboard-section dashboard-today-section anim-enter" style={{ '--delay': '0.12s' }}>
         <div className="dashboard-section-head">
           <div>
             <p className="section-label">Today</p>
