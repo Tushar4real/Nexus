@@ -229,46 +229,62 @@ svg {
 
 .app-shell {
   min-height: 100vh;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 24px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 var(--space-xl) 0 0;
   display: flex;
-  gap: 20px;
+  align-items: stretch;
+  gap: var(--space-xl);
   position: relative;
 }
 
 .app-sidebar {
-  width: 200px;
-  flex: 0 0 200px;
-  padding: 12px 0;
+  width: 256px;
+  flex: 0 0 256px;
+  min-height: 100vh;
+  padding: var(--space-xl) var(--space-lg);
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  background: transparent;
+  gap: var(--space-lg);
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
+  background: var(--color-surface-low);
+  color: var(--color-text);
+  border-right: 1px solid var(--color-border);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .sidebar-header {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--space-lg);
 }
 
 .app-brand {
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.05em;
+  font-family: var(--font-heading);
+  font-size: var(--text-h2-size);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--text-h1-tracking);
+  color: var(--color-text);
 }
 
 .app-subtitle {
-  margin-top: 6px;
-  color: var(--text-sub);
-  font-size: 0.82rem;
+  margin-top: var(--space-xs);
+  color: var(--color-text-muted);
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
+  text-transform: uppercase;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-sm);
 }
 
 .nav-link,
@@ -284,10 +300,34 @@ svg {
   padding: 0 14px;
 }
 
-.nav-link.active,
+.app-sidebar .nav-link {
+  justify-content: flex-start;
+  background: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid transparent;
+  border-right: var(--active-nav-border);
+  border-right-color: transparent;
+  border-radius: var(--radius-default);
+  box-shadow: none;
+}
+
+.app-sidebar .nav-link:hover {
+  color: var(--color-text);
+  background: var(--color-surface-high);
+  border-color: var(--color-primary);
+  border-right-color: transparent;
+}
+
+.app-sidebar .nav-link.active {
+  color: var(--color-text);
+  background: var(--color-surface-high);
+  border-color: var(--color-border);
+  border-right-color: var(--color-primary);
+}
+
 .bottom-nav-link.active {
-  color: var(--text);
-  background: var(--accent-soft);
+  color: var(--color-accent-contrast);
+  background: var(--accent);
   border-color: transparent;
 }
 
@@ -314,7 +354,8 @@ svg {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
 }
 
 .onboarding-overlay {
@@ -660,6 +701,33 @@ svg {
   text-overflow: ellipsis;
 }
 
+.app-sidebar .profile-card {
+  padding: var(--space-md);
+  gap: var(--space-sm);
+  background: var(--color-surface-high);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.app-sidebar .profile-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(79, 70, 229, 0.2);
+  color: var(--color-primary-light);
+  border: 1px solid rgba(79, 70, 229, 0.4);
+  font-family: var(--font-heading);
+}
+
+.app-sidebar .profile-name {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+.app-sidebar .profile-email {
+  color: var(--color-text-muted);
+}
+
 .theme-toggle,
 .logout-button,
 .profile-theme-button,
@@ -689,6 +757,38 @@ svg {
 .planning-action-secondary,
 .auth-switch {
   color: var(--text-sub);
+}
+
+.app-sidebar .theme-toggle,
+.app-sidebar .logout-button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-high);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  box-shadow: none;
+}
+
+.app-sidebar .theme-toggle {
+  font-family: var(--font-label);
+  font-size: var(--text-label-caps-size);
+  font-weight: var(--text-label-caps-weight);
+  letter-spacing: var(--text-label-caps-tracking);
+  text-transform: uppercase;
+}
+
+.app-sidebar .logout-button {
+  color: var(--color-text);
+}
+
+.app-sidebar .theme-toggle:hover,
+.app-sidebar .logout-button:hover {
+  background: var(--color-surface-highest);
+  border-color: var(--color-primary);
+  box-shadow: none;
 }
 
 .profile-delete-button {
