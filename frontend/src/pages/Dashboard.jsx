@@ -344,17 +344,17 @@ const Dashboard = ({ user }) => {
                   <div className="exam-strip-topline">
                     <strong className="exam-strip-name">{subject.name}</strong>
                     <div className="exam-strip-meta">
-                      <span className={`exam-strip-status urgency-${subject.urgencyTone} mono`}>
+                      <span className={`exam-strip-status urgency-${subject.urgencyTone}`}>
                         {subject.statusLabel}
                       </span>
-                      <span className="exam-progress-label mono">{subject.readiness}% ready</span>
+                      <span className="exam-progress-label">{subject.readiness}% ready</span>
                     </div>
                   </div>
                   <div className="exam-progress-row">
                     <div className="exam-progress-track">
                       <div
                         className={`exam-progress-fill urgency-${subject.urgencyTone}`}
-                        style={{ width: `${subject.readiness}%` }}
+                        style={{ width: `${subject.readiness}%`, backgroundColor: subject.color }}
                       />
                     </div>
                   </div>
