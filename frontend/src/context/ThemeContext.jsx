@@ -5,7 +5,7 @@ const ThemeContext = createContext(null);
 const THEME_STORAGE_KEY = 'nexus-theme';
 const ACCENT_STORAGE_KEY = 'nexus-accent';
 const DEFAULT_THEME_MODE = 'system';
-const DEFAULT_ACCENT = '#6366F1';
+const DEFAULT_ACCENT = '#4F46E5';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
@@ -36,6 +36,17 @@ const darkenHex = (hex, amount = 0.14) => {
   const { r, g, b } = hexToRgb(hex);
   const nextHex = [r, g, b]
     .map((channel) => Math.round(clamp(channel * (1 - amount), 0, 255)))
+    .map((channel) => channel.toString(16).padStart(2, '0'))
+    .join('');
+
+  return `#${nextHex}`.toUpperCase();
+};
+
+const mixHex = (hex, targetHex, ratio) => {
+  const source = hexToRgb(hex);
+  const target = hexToRgb(targetHex);
+  const nextHex = ['r', 'g', 'b']
+    .map((channel) => Math.round(clamp(source[channel] + (target[channel] - source[channel]) * ratio, 0, 255)))
     .map((channel) => channel.toString(16).padStart(2, '0'))
     .join('');
 
@@ -96,9 +107,15 @@ export const ThemeProvider = ({ children }) => {
 
   useEffect(() => {
     const normalizedAccent = normalizeHex(accentColor);
+    const nextPrimaryLight = theme === 'dark'
+      ? mixHex(normalizedAccent, '#FFFFFF', 0.72)
+      : darkenHex(normalizedAccent, 0.14);
     document.documentElement.style.setProperty('--accent', normalizedAccent);
+    document.documentElement.style.setProperty('--color-primary', normalizedAccent);
+    document.documentElement.style.setProperty('--color-primary-light', nextPrimaryLight);
+    document.documentElement.style.setProperty('--color-on-primary', '#FFFFFF');
     document.documentElement.style.setProperty('--accent-soft', toRgba(normalizedAccent, theme === 'dark' ? 0.18 : 0.1));
-    document.documentElement.style.setProperty('--accent-hover', darkenHex(normalizedAccent));
+    document.documentElement.style.setProperty('--accent-hover', theme === 'dark' ? mixHex(normalizedAccent, '#FFFFFF', 0.12) : darkenHex(normalizedAccent));
     window.localStorage.setItem(ACCENT_STORAGE_KEY, normalizedAccent);
   }, [accentColor, theme]);
 

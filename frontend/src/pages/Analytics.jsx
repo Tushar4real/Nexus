@@ -86,7 +86,7 @@ const getSubjectMeta = (subjectMap, subjectId) => (
   subjectMap.get(subjectId) || {
     id: '',
     name: 'No subject',
-    color: '#94a3b8',
+    color: '#64748b',
     examDate: null
   }
 );
@@ -98,7 +98,7 @@ const formatHours = (minutes) => {
 
 const toAlphaColor = (color, alpha) => {
   if (!color) {
-    return `rgba(148, 163, 184, ${alpha})`;
+    return `rgba(100, 116, 139, ${alpha})`;
   }
 
   if (color.startsWith('#')) {
@@ -117,7 +117,7 @@ const toAlphaColor = (color, alpha) => {
 
   const rgbMatch = color.match(/rgba?\(([^)]+)\)/i);
   if (rgbMatch) {
-    const [red = '148', green = '163', blue = '184'] = rgbMatch[1].split(',').map((part) => part.trim());
+    const [red = '100', green = '116', blue = '139'] = rgbMatch[1].split(',').map((part) => part.trim());
     return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
   }
 

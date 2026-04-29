@@ -1,10 +1,10 @@
 const SUBJECT_COLORS = [
-  { value: '#6366f1', cssVar: 'var(--subject-1)' },
-  { value: '#06b6d4', cssVar: 'var(--subject-2)' },
-  { value: '#10b981', cssVar: 'var(--subject-3)' },
-  { value: '#f59e0b', cssVar: 'var(--subject-4)' },
-  { value: '#ec4899', cssVar: 'var(--subject-5)' },
-  { value: '#8b5cf6', cssVar: 'var(--subject-6)' }
+  { value: '#bef264', cssVar: 'var(--subject-1)' },
+  { value: '#a3e635', cssVar: 'var(--subject-2)' },
+  { value: '#84cc16', cssVar: 'var(--subject-3)' },
+  { value: '#64748b', cssVar: 'var(--subject-4)' },
+  { value: '#475569', cssVar: 'var(--subject-5)' },
+  { value: '#334155', cssVar: 'var(--subject-6)' }
 ];
 
 const SubjectColorPicker = ({ value, onChange }) => (

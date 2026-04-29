@@ -8,7 +8,7 @@ import { localDateKey } from '@utils/helpers';
 
 const EMPTY_FORM = {
   name: '',
-  color: '#6366f1',
+  color: '#bef264',
   examDate: '',
   description: ''
 };

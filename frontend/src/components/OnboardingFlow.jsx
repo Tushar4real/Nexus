@@ -4,12 +4,12 @@ import { createSubject } from '../lib/subjects';
 import { localDateKey } from '@utils/helpers';
 
 const SUBJECT_COLORS = [
-  '#6366f1',
-  '#06b6d4',
-  '#10b981',
-  '#f59e0b',
-  '#ec4899',
-  '#8b5cf6'
+  '#bef264',
+  '#a3e635',
+  '#84cc16',
+  '#64748b',
+  '#475569',
+  '#334155'
 ];
 
 const CALIBRATION_MESSAGES = [

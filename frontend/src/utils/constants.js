@@ -1,12 +1,12 @@
 export const C = {
-  bg: "#0b0b0e", surface: "#111115", card: "#18181d",
-  border: "#252530", borderHi: "#3a3a48",
-  accent: "#f59e0b", accentFg: "#0b0b0e", accentGlow: "rgba(245,158,11,0.18)",
-  success: "#22c55e", successBg: "rgba(34,197,94,0.1)",
-  danger: "#ef4444", dangerBg: "rgba(239,68,68,0.1)",
-  warning: "#f97316",
-  blue: "#3b82f6", purple: "#a855f7",
-  t1: "#f1f5f9", t2: "#94a3b8", t3: "#475569",
+  bg: "#081425", surface: "#111c2d", card: "#152031",
+  border: "#45464d", borderHi: "#64748b",
+  accent: "#bef264", accentFg: "#0f172a", accentGlow: "rgba(190,242,100,0.22)",
+  success: "#bef264", successBg: "rgba(190,242,100,0.14)",
+  danger: "#f87171", dangerBg: "rgba(248,113,113,0.12)",
+  warning: "#84cc16",
+  blue: "#64748b", purple: "#334155",
+  t1: "#d8e3fb", t2: "#94a3b8", t3: "#64748b",
 };
 
 export const DIFF_COLOR = { Easy: C.success, Medium: C.warning, Hard: C.danger };

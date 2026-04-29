@@ -1,21 +1,21 @@
-/* SQL note: -- public.profiles requires these columns if they do not exist yet: display_name text, bio text, avatar_color text default '#6366F1', school text, target_date date, theme text, accent_color text, default_page text */
+/* SQL note: -- public.profiles requires these columns if they do not exist yet: display_name text, bio text, avatar_color text default '#4F46E5', school text, target_date date, theme text, accent_color text, default_page text */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@config/supabase';
 import { useTheme } from '@context/ThemeContext';
 import { localDateKey } from '@utils/helpers';
 
-const DEFAULT_AVATAR_COLOR = '#6366F1';
-const AVATAR_SWATCHES = ['#6366F1', '#8B5CF6', '#0EA5E9', '#10B981', '#F43F5E', '#F59E0B'];
+const DEFAULT_AVATAR_COLOR = '#4F46E5';
+const AVATAR_SWATCHES = ['#4F46E5', '#6366F1', '#C3C0FF', '#FFB695', '#918FA1', '#2A2933'];
 const ACCENT_OPTIONS = [
-  { label: 'Indigo', value: '#6366F1' },
-  { label: 'Violet', value: '#8B5CF6' },
-  { label: 'Sky', value: '#0EA5E9' },
-  { label: 'Emerald', value: '#10B981' },
-  { label: 'Rose', value: '#F43F5E' },
-  { label: 'Amber', value: '#F59E0B' },
-  { label: 'Slate', value: '#475569' },
-  { label: 'Teal', value: '#14B8A6' }
+  { label: 'Indigo', value: '#4F46E5' },
+  { label: 'Violet', value: '#6366F1' },
+  { label: 'Periwinkle', value: '#7C7BFF' },
+  { label: 'Mist', value: '#C3C0FF' },
+  { label: 'Scholar', value: '#B7C8E1' },
+  { label: 'Ember', value: '#FFB695' },
+  { label: 'Slate', value: '#918FA1' },
+  { label: 'Ink', value: '#2A2933' }
 ];
 const THEME_OPTIONS = [
   { label: 'Light', value: 'light' },
@@ -35,7 +35,7 @@ const EMPTY_PROFILE = {
   school: '',
   target_date: '',
   theme: 'system',
-  accent_color: '#6366F1',
+  accent_color: '#4F46E5',
   default_page: 'dashboard'
 };
 
@@ -135,14 +135,14 @@ const getCountdownMeta = (targetDate) => {
   };
 };
 
-const resolveProfileState = (profileRow, authUser, localProfile = {}, themeMode = 'system', accentColor = '#6366F1') => ({
+const resolveProfileState = (profileRow, authUser, localProfile = {}, themeMode = 'system', accentColor = '#4F46E5') => ({
   display_name: localProfile.display_name || profileRow?.display_name || profileRow?.name || authUser?.name || '',
   bio: localProfile.bio ?? profileRow?.bio ?? '',
   avatar_color: localProfile.avatar_color || profileRow?.avatar_color || DEFAULT_AVATAR_COLOR,
   school: localProfile.school ?? profileRow?.school ?? profileRow?.major ?? '',
   target_date: localProfile.target_date || profileRow?.target_date?.slice(0, 10) || '',
   theme: localProfile.theme || profileRow?.theme || themeMode || 'system',
-  accent_color: localProfile.accent_color || profileRow?.accent_color || accentColor || '#6366F1',
+  accent_color: localProfile.accent_color || profileRow?.accent_color || accentColor || '#4F46E5',
   default_page: localProfile.default_page || profileRow?.default_page || 'dashboard'
 });
 
@@ -982,14 +982,10 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
 const profileStyles = `
   .profile-page {
     min-height: 100%;
-    background: #F4F4F8;
-    border-radius: 24px;
+    background: var(--bg);
+    border-radius: var(--radius-lg);
     padding: 8px 0 28px;
-    font-family: 'Inter', sans-serif;
-  }
-
-  .dark .profile-page {
-    background: #0f1117;
+    font-family: var(--font-body);
   }
 
   .profile-header {
@@ -998,15 +994,12 @@ const profileStyles = `
 
   .profile-page-title {
     margin: 0;
+    font-family: var(--font-heading);
     font-size: 32px;
     line-height: 1.05;
-    font-weight: 700;
-    color: #111827;
-    letter-spacing: 0;
-  }
-
-  .dark .profile-page-title {
-    color: #F3F4F6;
+    font-weight: var(--font-weight-bold);
+    color: var(--text);
+    letter-spacing: -0.03em;
   }
 
   .profile-layout,
@@ -1028,41 +1021,29 @@ const profileStyles = `
   .profile-empty,
   .profile-modal-card,
   .profile-skeleton-card {
-    background: #FFFFFF;
-    border-radius: 16px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     padding: 24px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-  }
-
-  .dark .profile-card-surface,
-  .dark .profile-empty,
-  .dark .profile-modal-card,
-  .dark .profile-skeleton-card {
-    background: #131720;
-    border-color: rgba(55, 65, 81, 0.55);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.26);
+    border: 1px solid var(--color-border);
   }
 
   .profile-card-title,
   .profile-modal-title {
     margin: 0;
+    font-family: var(--font-heading);
     font-size: 20px;
-    font-weight: 700;
-    color: #111827;
-  }
-
-  .dark .profile-card-title,
-  .dark .profile-modal-title {
-    color: #F9FAFB;
+    font-weight: var(--font-weight-bold);
+    color: var(--text);
   }
 
   .profile-modal-eyebrow {
-    font-size: 11px;
-    font-weight: 700;
+    font-family: var(--font-heading);
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-bold);
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #EF4444;
+    color: var(--critical);
   }
 
   .profile-identity-grid {
@@ -1082,9 +1063,9 @@ const profileStyles = `
     border-radius: 999px;
     display: grid;
     place-items: center;
-    color: #FFFFFF;
+    color: var(--color-on-primary);
     font-size: 34px;
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
   }
 
@@ -1100,13 +1081,13 @@ const profileStyles = `
     height: 18px;
     border-radius: 999px;
     border: 2px solid transparent;
-    box-shadow: 0 0 0 1px rgba(148, 163, 184, 0.35);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 68%, transparent);
     cursor: pointer;
   }
 
   .profile-swatch.active {
     transform: scale(1.1);
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.14);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 32%, transparent);
   }
 
   .profile-title-row,
@@ -1124,14 +1105,11 @@ const profileStyles = `
 
   .profile-display-name {
     margin: 0;
+    font-family: var(--font-heading);
     font-size: 28px;
     line-height: 1.1;
-    font-weight: 700;
-    color: #111827;
-  }
-
-  .dark .profile-display-name {
-    color: #F9FAFB;
+    font-weight: var(--font-weight-bold);
+    color: var(--text);
   }
 
   .profile-email-text,
@@ -1142,27 +1120,17 @@ const profileStyles = `
   .profile-char-count {
     margin: 0;
     font-size: 14px;
-    color: #6B7280;
-  }
-
-  .dark .profile-email-text,
-  .dark .profile-member-since,
-  .dark .profile-muted-copy,
-  .dark .profile-preference-note,
-  .dark .profile-bio-text,
-  .dark .profile-char-count {
-    color: #9CA3AF;
+    color: var(--text-muted);
   }
 
   .profile-field-label {
     display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-  }
-
-  .dark .profile-field-label {
-    color: #E5E7EB;
+    font-family: var(--font-label);
+    font-size: var(--text-label-caps-size);
+    font-weight: var(--text-label-caps-weight);
+    letter-spacing: var(--text-label-caps-tracking);
+    text-transform: uppercase;
+    color: var(--color-text-muted);
   }
 
   .profile-icon-button,
@@ -1173,10 +1141,10 @@ const profileStyles = `
   .profile-pill-option,
   .profile-accent-option {
     min-height: 40px;
-    border-radius: 12px;
-    font-family: 'Inter', sans-serif;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
     font-size: 14px;
-    font-weight: 600;
+    font-weight: var(--font-weight-semibold);
     cursor: pointer;
   }
 
@@ -1186,9 +1154,9 @@ const profileStyles = `
     padding: 0;
     display: grid;
     place-items: center;
-    border: 1px solid rgba(203, 213, 225, 0.8);
-    background: #FFFFFF;
-    color: #4B5563;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-high);
+    color: var(--color-text-muted);
   }
 
   .profile-icon-button svg {
@@ -1201,87 +1169,59 @@ const profileStyles = `
     stroke-linejoin: round;
   }
 
-  .dark .profile-icon-button {
-    background: #161B25;
-    border-color: rgba(55, 65, 81, 0.8);
-    color: #D1D5DB;
-  }
-
   .profile-primary-button {
     padding: 0 16px;
-    border: 1px solid var(--accent);
-    background: var(--accent);
-    color: #FFFFFF;
+    border: 1px solid var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
   }
 
   .profile-secondary-button,
   .profile-outline-button {
     padding: 0 16px;
-    border: 1px solid rgba(203, 213, 225, 0.85);
-    background: transparent;
-    color: #374151;
-  }
-
-  .dark .profile-secondary-button,
-  .dark .profile-outline-button {
-    border-color: rgba(75, 85, 99, 0.85);
-    color: #E5E7EB;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-high);
+    color: var(--color-text-muted);
   }
 
   .profile-danger-button {
     padding: 0 16px;
-    border: 1px solid rgba(239, 68, 68, 0.45);
+    border: 1px solid color-mix(in srgb, var(--critical) 45%, transparent);
     background: transparent;
-    color: #EF4444;
+    color: var(--critical);
   }
 
   .profile-account-actions {
     padding: 20px;
-    border-radius: 16px;
-    border: 1px solid rgba(239, 68, 68, 0.18);
-    background: rgba(239, 68, 68, 0.05);
-  }
-
-  .dark .profile-account-actions {
-    background: rgba(127, 29, 29, 0.16);
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in srgb, var(--color-error) 18%, transparent);
+    background: color-mix(in srgb, var(--color-error) 6%, var(--color-surface));
   }
 
   .profile-export-section {
     padding: 20px;
-    border-radius: 16px;
-    border: 1px solid rgba(226, 232, 240, 0.9);
-    background: rgba(255, 255, 255, 0.72);
-  }
-
-  .dark .profile-export-section {
-    background: rgba(22, 27, 37, 0.9);
-    border-color: rgba(55, 65, 81, 0.55);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-high);
   }
 
   .profile-field-input,
   .profile-inline-input {
     width: 100%;
     min-height: 44px;
-    border-radius: 12px;
-    border: 1px solid rgba(203, 213, 225, 0.85);
-    background: rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-default);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-high);
     padding: 0 14px;
     font-size: 14px;
-    color: #111827;
+    color: var(--color-text);
     outline: none;
-  }
-
-  .dark .profile-field-input,
-  .dark .profile-inline-input {
-    background: #161B25;
-    border-color: rgba(75, 85, 99, 0.85);
-    color: #F3F4F6;
   }
 
   .profile-field-input:focus,
   .profile-inline-input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 14%, transparent);
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
   }
 
   .profile-display-input {
@@ -1294,7 +1234,7 @@ const profileStyles = `
     min-height: 18px;
     opacity: 0;
     font-size: 13px;
-    color: #10B981;
+    color: var(--color-primary-light);
     transition: opacity 180ms ease;
   }
 
@@ -1311,18 +1251,18 @@ const profileStyles = `
   }
 
   .profile-countdown-badge.tone-amber {
-    color: #B45309;
-    background: rgba(245, 158, 11, 0.14);
+    color: var(--color-primary-light);
+    background: rgba(79, 70, 229, 0.1);
   }
 
   .profile-countdown-badge.tone-danger {
-    color: #B91C1C;
-    background: rgba(239, 68, 68, 0.14);
+    color: var(--color-error);
+    background: rgba(196, 90, 80, 0.1);
   }
 
   .profile-countdown-badge.tone-muted {
-    color: #6B7280;
-    background: rgba(148, 163, 184, 0.12);
+    color: var(--color-text-muted);
+    background: color-mix(in srgb, var(--color-border) 16%, transparent);
   }
 
   .profile-pill-toggle {
@@ -1331,35 +1271,21 @@ const profileStyles = `
     gap: 6px;
     width: min(100%, 360px);
     padding: 6px;
-    border-radius: 16px;
-    background: rgba(99, 102, 241, 0.08);
-  }
-
-  .dark .profile-pill-toggle {
-    background: rgba(99, 102, 241, 0.14);
+    border-radius: var(--radius-lg);
+    background: var(--color-surface-high);
+    border: 1px solid var(--color-border);
   }
 
   .profile-pill-option {
-    border: 1px solid transparent;
+    border: 1px solid var(--color-border);
     background: transparent;
-    color: #6B7280;
+    color: var(--color-text-muted);
   }
 
   .profile-pill-option.active {
-    background: #FFFFFF;
-    border-color: rgba(203, 213, 225, 0.9);
-    color: #111827;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
-  }
-
-  .dark .profile-pill-option {
-    color: #9CA3AF;
-  }
-
-  .dark .profile-pill-option.active {
-    background: #161B25;
-    border-color: rgba(75, 85, 99, 0.85);
-    color: #F9FAFB;
+    background: var(--color-surface-highest);
+    border-color: var(--color-primary);
+    color: var(--color-text);
     box-shadow: none;
   }
 
@@ -1371,9 +1297,9 @@ const profileStyles = `
 
   .profile-accent-option {
     padding: 10px 12px;
-    border: 1px solid rgba(203, 213, 225, 0.85);
-    background: rgba(255, 255, 255, 0.82);
-    color: #111827;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-high);
+    color: var(--color-text);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1381,14 +1307,8 @@ const profileStyles = `
   }
 
   .profile-accent-option.active {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
-  }
-
-  .dark .profile-accent-option {
-    background: #161B25;
-    border-color: rgba(75, 85, 99, 0.85);
-    color: #F9FAFB;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
   }
 
   .profile-accent-chip {
@@ -1413,18 +1333,18 @@ const profileStyles = `
     max-width: min(360px, calc(100vw - 32px));
     padding: 12px 14px;
     border-radius: 14px;
-    background: #111827;
-    color: #FFFFFF;
+    background: var(--color-nav);
+    color: var(--color-text-inverse);
     font-size: 14px;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .profile-toast.tone-success {
-    background: #065F46;
+    background: #4d7c0f;
   }
 
   .profile-toast.tone-error {
-    background: #991B1B;
+    background: #b91c1c;
   }
 
   .profile-modal-backdrop {
