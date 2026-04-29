@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase, isSupabaseConfigured, missingSupabaseKeys } from '@config/supabase';
 
 const profileCache = new Map();
+const PROFILE_SELECT_FULL = 'id,name,email,avatar,display_name,bio,avatar_color,school,target_date,theme,accent_color,default_page';
 const PROFILE_SELECT_SAFE = 'id,name,email,avatar';
 
 const buildAvatar = (name, email = '') => {
@@ -16,6 +17,22 @@ const buildAvatar = (name, email = '') => {
 };
 
 const hasProfileColumn = (profileRow, column) => Boolean(profileRow) && Object.prototype.hasOwnProperty.call(profileRow, column);
+
+const isMissingColumnError = (error, column) => {
+  const message = error?.message?.toLowerCase() || '';
+  const normalizedColumn = column.toLowerCase();
+  return (
+    message.includes(`could not find the '${normalizedColumn}' column`)
+    || message.includes(`column profiles.${normalizedColumn} does not exist`)
+    || message.includes(`column "profiles"."${normalizedColumn}" does not exist`)
+    || message.includes(`column "${normalizedColumn}" does not exist`)
+  );
+};
+
+const isMissingProfileColumnError = (error) => (
+  ['display_name', 'bio', 'avatar_color', 'school', 'target_date', 'theme', 'accent_color', 'default_page']
+    .some((column) => isMissingColumnError(error, column))
+);
 
 const buildUser = (authUser, profile = {}) => ({
   ...authUser,
@@ -41,11 +58,19 @@ const normalizeAuthError = (error, fallbackMessage) => {
 };
 
 const fetchProfile = async (userId) => {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('profiles')
-    .select(PROFILE_SELECT_SAFE)
+    .select(PROFILE_SELECT_FULL)
     .eq('id', userId)
     .maybeSingle();
+
+  if (error && isMissingProfileColumnError(error)) {
+    ({ data, error } = await supabase
+      .from('profiles')
+      .select(PROFILE_SELECT_SAFE)
+      .eq('id', userId)
+      .maybeSingle());
+  }
 
   if (error) {
     throw error;

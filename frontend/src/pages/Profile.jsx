@@ -28,6 +28,7 @@ const DEFAULT_PAGE_OPTIONS = [
   { label: 'Subjects', value: 'subjects' },
   { label: 'Analytics', value: 'analytics' }
 ];
+const PROFILE_SELECT_FULL = 'id,name,email,avatar,display_name,bio,avatar_color,school,target_date,theme,accent_color,default_page';
 const PROFILE_SELECT_SAFE = 'id,name,email,avatar';
 const EMPTY_PROFILE = {
   display_name: '',
@@ -94,8 +95,19 @@ const clearLocalProfileFields = (userId, fields) => {
 
 const isMissingColumnError = (error, column) => {
   const message = error?.message?.toLowerCase() || '';
-  return message.includes(`could not find the '${column.toLowerCase()}' column`);
+  const normalizedColumn = column.toLowerCase();
+  return (
+    message.includes(`could not find the '${normalizedColumn}' column`)
+    || message.includes(`column profiles.${normalizedColumn} does not exist`)
+    || message.includes(`column "profiles"."${normalizedColumn}" does not exist`)
+    || message.includes(`column "${normalizedColumn}" does not exist`)
+  );
 };
+
+const isMissingProfileColumnError = (error) => (
+  ['display_name', 'bio', 'avatar_color', 'school', 'target_date', 'theme', 'accent_color', 'default_page']
+    .some((column) => isMissingColumnError(error, column))
+);
 
 const hasProfileColumn = (profileRow, column) => Boolean(profileRow) && Object.prototype.hasOwnProperty.call(profileRow, column);
 
@@ -170,17 +182,37 @@ const getCountdownMeta = (targetDate) => {
 };
 
 const fetchProfileRecord = async (userId) => {
-  const response = await supabase
+  let response = await supabase
     .from('profiles')
-    .select(PROFILE_SELECT_SAFE)
+    .select(PROFILE_SELECT_FULL)
     .eq('id', userId)
     .maybeSingle();
+
+  if (response.error && isMissingProfileColumnError(response.error)) {
+    response = await supabase
+      .from('profiles')
+      .select(PROFILE_SELECT_SAFE)
+      .eq('id', userId)
+      .maybeSingle();
+  }
 
   if (response.error) {
     throw response.error;
   }
 
   return response.data || null;
+};
+
+const buildProfileUpsertPayload = (user, profileRow, patch) => {
+  const displayName = patch.display_name ?? profileRow?.display_name ?? profileRow?.name ?? user?.name ?? 'User';
+  const email = profileRow?.email ?? user?.email ?? '';
+  return {
+    id: user.uid,
+    name: patch.name ?? profileRow?.name ?? displayName,
+    email,
+    avatar: profileRow?.avatar ?? buildInitials(displayName, email),
+    ...patch
+  };
 };
 
 const resolveProfileState = (profileRow, authUser, localProfile = {}, themeMode = 'system', accentColor = '#4F46E5') => ({
@@ -403,23 +435,36 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setSavingField(Object.keys(payload)[0] || '');
 
     const matchesMissingColumn = (error, record) => Object.keys(record || {}).some((key) => isMissingColumnError(error, key));
+    const runUpdate = async (record) => supabase
+      .from('profiles')
+      .update(record)
+      .eq('id', user.uid)
+      .select('id')
+      .maybeSingle();
+    const runUpsert = async (record) => supabase
+      .from('profiles')
+      .upsert(buildProfileUpsertPayload(user, profileRow, record), { onConflict: 'id' })
+      .select('id')
+      .maybeSingle();
 
     let activePayload = payload;
     let primaryError = null;
 
-    const primaryResponse = await supabase
-      .from('profiles')
-      .update(payload)
-      .eq('id', user.uid);
+    let primaryResponse = await runUpdate(payload);
+
+    if (!primaryResponse.error && !primaryResponse.data) {
+      primaryResponse = await runUpsert(payload);
+    }
 
     if (primaryResponse.error) {
       primaryError = primaryResponse.error;
 
       if (fallbackPayload && matchesMissingColumn(primaryError, payload)) {
-        const fallbackResponse = await supabase
-          .from('profiles')
-          .update(fallbackPayload)
-          .eq('id', user.uid);
+        let fallbackResponse = await runUpdate(fallbackPayload);
+
+        if (!fallbackResponse.error && !fallbackResponse.data) {
+          fallbackResponse = await runUpsert(fallbackPayload);
+        }
 
         if (fallbackResponse.error) {
           setSavingField('');
@@ -495,7 +540,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
 
     try {
       await updateProfileRecord(
-        { display_name: nextValue },
+        { display_name: nextValue, name: nextValue },
         {
           successMessage: 'Display name saved.',
           fallbackPayload: { name: nextValue },
@@ -594,8 +639,13 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setThemeMode(nextTheme);
 
     try {
-      persistLocalPatch({ theme: nextTheme });
-      pushToast('Theme changed.', 'success');
+      await updateProfileRecord(
+        { theme: nextTheme },
+        {
+          successMessage: 'Theme changed.',
+          localFallback: { theme: nextTheme }
+        }
+      );
     } catch (error) {
       setProfile((current) => ({ ...current, theme: previousTheme }));
       setThemeMode(previousTheme);
@@ -609,8 +659,13 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setAccentColor(nextAccent);
 
     try {
-      persistLocalPatch({ accent_color: nextAccent });
-      pushToast('Accent color changed.', 'success');
+      await updateProfileRecord(
+        { accent_color: nextAccent },
+        {
+          successMessage: 'Accent color changed.',
+          localFallback: { accent_color: nextAccent }
+        }
+      );
     } catch (error) {
       setProfile((current) => ({ ...current, accent_color: previousAccent }));
       setAccentColor(previousAccent);
@@ -624,12 +679,14 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setProfile((current) => ({ ...current, default_page: nextValue }));
 
     try {
-      persistLocalPatch({ default_page: nextValue });
+      await updateProfileRecord(
+        { default_page: nextValue },
+        {
+          localFallback: { default_page: nextValue },
+          refreshAfterSave: true
+        }
+      );
       flashInlineSaved('default_page');
-
-      if (typeof onRefreshProfile === 'function') {
-        await onRefreshProfile();
-      }
     } catch (error) {
       setProfile((current) => ({ ...current, default_page: previousValue }));
       pushToast(error.message || 'Unable to save your default page.', 'error');
@@ -719,7 +776,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `clarity-export-${localDateKey()}.csv`;
+      link.download = `nexus-export-${localDateKey()}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1362,8 +1419,14 @@ const profileStyles = `
     outline: none;
   }
 
+  .profile-field-input::placeholder,
+  .profile-inline-input::placeholder {
+    color: var(--color-text-muted);
+  }
+
   .profile-field-input::-webkit-calendar-picker-indicator {
     cursor: pointer;
+    filter: none;
   }
 
   .profile-field-input:focus,
@@ -1529,6 +1592,81 @@ const profileStyles = `
 
   .dark .profile-skeleton-card::after {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  }
+
+  .dark .profile-page {
+    background: var(--bg);
+  }
+
+  .dark .profile-card-surface,
+  .dark .profile-empty,
+  .dark .profile-modal-card,
+  .dark .profile-skeleton-card {
+    background: color-mix(in srgb, var(--color-surface) 92%, #000000);
+    border-color: color-mix(in srgb, var(--color-border) 88%, #000000);
+  }
+
+  .dark .profile-avatar-display {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 12px 32px rgba(0, 0, 0, 0.25);
+  }
+
+  .dark .profile-icon-button,
+  .dark .profile-secondary-button,
+  .dark .profile-outline-button,
+  .dark .profile-field-input,
+  .dark .profile-inline-input,
+  .dark .profile-pill-toggle,
+  .dark .profile-accent-option,
+  .dark .profile-export-section {
+    background: color-mix(in srgb, var(--color-surface-high) 92%, #000000);
+  }
+
+  .dark .profile-pill-option.active {
+    background: color-mix(in srgb, var(--color-surface-highest) 82%, #000000);
+  }
+
+  .dark .profile-account-actions {
+    background: color-mix(in srgb, var(--color-error) 8%, var(--color-surface));
+    border-color: color-mix(in srgb, var(--color-error) 28%, var(--color-border));
+  }
+
+  .dark .profile-countdown-badge.tone-amber {
+    background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+    color: color-mix(in srgb, #ffffff 82%, var(--color-primary));
+  }
+
+  .dark .profile-countdown-badge.tone-danger {
+    background: color-mix(in srgb, var(--color-error) 22%, transparent);
+    color: color-mix(in srgb, #ffffff 84%, var(--color-error));
+  }
+
+  .dark .profile-countdown-badge.tone-muted {
+    background: color-mix(in srgb, var(--color-border) 32%, transparent);
+  }
+
+  .dark .profile-accent-chip {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  }
+
+  .dark .profile-toast {
+    background: color-mix(in srgb, var(--color-nav) 84%, #000000);
+  }
+
+  .dark .profile-toast.tone-success {
+    background: #3f6212;
+  }
+
+  .dark .profile-toast.tone-error {
+    background: #991b1b;
+  }
+
+  .dark .profile-modal-backdrop {
+    background: rgba(2, 6, 23, 0.72);
+    backdrop-filter: blur(8px);
+  }
+
+  .dark .profile-field-input::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(0.9);
   }
 
   .profile-skeleton-identity {
