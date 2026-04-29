@@ -13,6 +13,16 @@ create table if not exists public.profiles (
 alter table public.profiles
   add column if not exists major text;
 
+alter table public.profiles
+  add column if not exists display_name text,
+  add column if not exists bio text,
+  add column if not exists avatar_color text default '#4F46E5',
+  add column if not exists school text,
+  add column if not exists target_date date,
+  add column if not exists theme text default 'system',
+  add column if not exists accent_color text default '#4F46E5',
+  add column if not exists default_page text default 'dashboard';
+
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,

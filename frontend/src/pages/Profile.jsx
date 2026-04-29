@@ -28,6 +28,7 @@ const DEFAULT_PAGE_OPTIONS = [
   { label: 'Subjects', value: 'subjects' },
   { label: 'Analytics', value: 'analytics' }
 ];
+const PROFILE_SELECT_SAFE = 'id,name,email,avatar';
 const EMPTY_PROFILE = {
   display_name: '',
   bio: '',
@@ -72,9 +73,42 @@ const clearLocalProfile = (userId) => {
   window.localStorage.removeItem(getLocalProfileKey(userId));
 };
 
+const clearLocalProfileFields = (userId, fields) => {
+  if (!userId || typeof window === 'undefined') {
+    return {};
+  }
+
+  const nextValue = { ...readLocalProfile(userId) };
+  fields.forEach((field) => {
+    delete nextValue[field];
+  });
+
+  if (Object.keys(nextValue).length === 0) {
+    window.localStorage.removeItem(getLocalProfileKey(userId));
+    return {};
+  }
+
+  window.localStorage.setItem(getLocalProfileKey(userId), JSON.stringify(nextValue));
+  return nextValue;
+};
+
 const isMissingColumnError = (error, column) => {
   const message = error?.message?.toLowerCase() || '';
   return message.includes(`could not find the '${column.toLowerCase()}' column`);
+};
+
+const hasProfileColumn = (profileRow, column) => Boolean(profileRow) && Object.prototype.hasOwnProperty.call(profileRow, column);
+
+const resolveStoredValue = ({ hasColumn, rowValue, localValue, fallbackValue }) => {
+  if (hasColumn) {
+    return rowValue ?? fallbackValue;
+  }
+
+  if (localValue !== undefined) {
+    return localValue ?? fallbackValue;
+  }
+
+  return fallbackValue;
 };
 
 const buildInitials = (name, email = '') => {
@@ -135,15 +169,69 @@ const getCountdownMeta = (targetDate) => {
   };
 };
 
+const fetchProfileRecord = async (userId) => {
+  const response = await supabase
+    .from('profiles')
+    .select(PROFILE_SELECT_SAFE)
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (response.error) {
+    throw response.error;
+  }
+
+  return response.data || null;
+};
+
 const resolveProfileState = (profileRow, authUser, localProfile = {}, themeMode = 'system', accentColor = '#4F46E5') => ({
-  display_name: localProfile.display_name || profileRow?.display_name || profileRow?.name || authUser?.name || '',
-  bio: localProfile.bio ?? profileRow?.bio ?? '',
-  avatar_color: localProfile.avatar_color || profileRow?.avatar_color || DEFAULT_AVATAR_COLOR,
-  school: localProfile.school ?? profileRow?.school ?? profileRow?.major ?? '',
-  target_date: localProfile.target_date || profileRow?.target_date?.slice(0, 10) || '',
-  theme: localProfile.theme || profileRow?.theme || themeMode || 'system',
-  accent_color: localProfile.accent_color || profileRow?.accent_color || accentColor || '#4F46E5',
-  default_page: localProfile.default_page || profileRow?.default_page || 'dashboard'
+  display_name: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'display_name'),
+    rowValue: profileRow?.display_name,
+    localValue: localProfile.display_name,
+    fallbackValue: profileRow?.name || authUser?.name || ''
+  }),
+  bio: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'bio'),
+    rowValue: profileRow?.bio,
+    localValue: localProfile.bio,
+    fallbackValue: ''
+  }),
+  avatar_color: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'avatar_color'),
+    rowValue: profileRow?.avatar_color,
+    localValue: localProfile.avatar_color,
+    fallbackValue: DEFAULT_AVATAR_COLOR
+  }),
+  school: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'school'),
+    rowValue: profileRow?.school,
+    localValue: localProfile.school,
+    fallbackValue: ''
+  }),
+  target_date: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'target_date'),
+    rowValue: profileRow?.target_date?.slice(0, 10) || '',
+    localValue: localProfile.target_date,
+    fallbackValue: ''
+  }),
+  theme: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'theme'),
+    rowValue: profileRow?.theme,
+    localValue: localProfile.theme,
+    fallbackValue: themeMode || 'system'
+  }),
+  accent_color: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'accent_color'),
+    rowValue: profileRow?.accent_color,
+    localValue: localProfile.accent_color,
+    fallbackValue: accentColor || '#4F46E5'
+  }),
+  default_page: resolveStoredValue({
+    hasColumn: hasProfileColumn(profileRow, 'default_page'),
+    rowValue: profileRow?.default_page,
+    localValue: localProfile.default_page,
+    fallbackValue: 'dashboard'
+  })
 });
 
 const ProfileSkeleton = () => (
@@ -173,9 +261,13 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
   const [savingField, setSavingField] = useState('');
   const [inlineSaved, setInlineSaved] = useState({});
   const [toasts, setToasts] = useState([]);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const themeModeRef = useRef(themeMode);
+  const accentColorRef = useRef(accentColor);
   const toastTimeoutsRef = useRef(new Map());
   const inlineTimeoutsRef = useRef(new Map());
 
@@ -217,6 +309,11 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
   }, []);
 
   useEffect(() => {
+    themeModeRef.current = themeMode;
+    accentColorRef.current = accentColor;
+  }, [accentColor, themeMode]);
+
+  useEffect(() => {
     if (!user?.uid) {
       setLoading(false);
       return;
@@ -227,21 +324,29 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
 
       try {
         const [profileResponse, authResponse] = await Promise.all([
-          supabase.from('profiles').select('*').eq('id', user.uid).maybeSingle(),
+          fetchProfileRecord(user.uid),
           supabase.auth.getUser()
         ]);
-
-        if (profileResponse.error) {
-          throw profileResponse.error;
-        }
 
         if (authResponse.error) {
           throw authResponse.error;
         }
 
-        const nextProfileRow = profileResponse.data || null;
+        const nextProfileRow = profileResponse || null;
         const nextLocalProfile = readLocalProfile(user.uid);
-        const nextProfile = resolveProfileState(nextProfileRow, user, nextLocalProfile, themeMode, accentColor);
+        const nextThemePreference = hasProfileColumn(nextProfileRow, 'theme')
+          ? nextProfileRow?.theme
+          : nextLocalProfile.theme;
+        const nextAccentPreference = hasProfileColumn(nextProfileRow, 'accent_color')
+          ? nextProfileRow?.accent_color
+          : nextLocalProfile.accent_color;
+        const nextProfile = resolveProfileState(
+          nextProfileRow,
+          user,
+          nextLocalProfile,
+          nextThemePreference || 'system',
+          nextAccentPreference || '#4F46E5'
+        );
         const authUser = authResponse.data?.user || null;
 
         setProfileRow(nextProfileRow);
@@ -252,11 +357,11 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
         setEmail(authUser?.email || user.email || '');
         setMemberSince(formatMemberSince(authUser?.created_at || user.created_at));
 
-        if (nextProfile.theme !== themeMode) {
+        if (nextProfile.theme !== themeModeRef.current) {
           setThemeMode(nextProfile.theme);
         }
 
-        if (nextProfile.accent_color !== accentColor) {
+        if (nextProfile.accent_color !== accentColorRef.current) {
           setAccentColor(nextProfile.accent_color);
         }
       } catch (error) {
@@ -267,7 +372,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     };
 
     void loadProfile();
-  }, [accentColor, setAccentColor, setThemeMode, themeMode, user]);
+  }, [setAccentColor, setThemeMode, user]);
 
   const persistLocalPatch = (patch) => {
     const nextLocalProfile = writeLocalProfile(user.uid, patch);
@@ -275,6 +380,12 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     const nextProfile = resolveProfileState(profileRow, user, nextLocalProfile, themeMode, accentColor);
     setProfile(nextProfile);
     return nextProfile;
+  };
+
+  const clearPersistedLocalPatch = (fields) => {
+    const nextLocalProfile = clearLocalProfileFields(user.uid, fields);
+    setLocalProfile(nextLocalProfile);
+    return nextLocalProfile;
   };
 
   const updateProfileRecord = async (payload, options = {}) => {
@@ -291,46 +402,74 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
 
     setSavingField(Object.keys(payload)[0] || '');
 
-    let response = await supabase
+    const matchesMissingColumn = (error, record) => Object.keys(record || {}).some((key) => isMissingColumnError(error, key));
+
+    let activePayload = payload;
+    let primaryError = null;
+
+    const primaryResponse = await supabase
       .from('profiles')
       .update(payload)
-      .eq('id', user.uid)
-      .select('*')
-      .single();
+      .eq('id', user.uid);
 
-    if (response.error && fallbackPayload) {
-      const shouldFallback = Object.keys(payload).some((key) => isMissingColumnError(response.error, key));
+    if (primaryResponse.error) {
+      primaryError = primaryResponse.error;
 
-      if (shouldFallback) {
-        response = await supabase
+      if (fallbackPayload && matchesMissingColumn(primaryError, payload)) {
+        const fallbackResponse = await supabase
           .from('profiles')
           .update(fallbackPayload)
-          .eq('id', user.uid)
-          .select('*')
-          .single();
+          .eq('id', user.uid);
+
+        if (fallbackResponse.error) {
+          setSavingField('');
+
+          if (localFallback && matchesMissingColumn(fallbackResponse.error, fallbackPayload)) {
+            persistLocalPatch(localFallback);
+
+            if (successMessage) {
+              pushToast(successMessage, 'success');
+            }
+
+            return { ...profileRow, ...localFallback };
+          }
+
+          throw fallbackResponse.error;
+        }
+
+        activePayload = fallbackPayload;
+      } else {
+        setSavingField('');
+
+        if (localFallback && matchesMissingColumn(primaryError, payload)) {
+          persistLocalPatch(localFallback);
+
+          if (successMessage) {
+            pushToast(successMessage, 'success');
+          }
+
+          return { ...profileRow, ...localFallback };
+        }
+
+        throw primaryError;
       }
     }
 
     setSavingField('');
 
-    if (response.error) {
-      const missingColumn = Object.keys(payload).some((key) => isMissingColumnError(response.error, key));
+    let nextRow = { ...profileRow, ...activePayload };
 
-      if (missingColumn && localFallback) {
-        persistLocalPatch(localFallback);
-
-        if (successMessage) {
-          pushToast(successMessage, 'success');
-        }
-
-        return { ...profileRow, ...localFallback };
+    try {
+      const fetchedProfile = await fetchProfileRecord(user.uid);
+      nextRow = fetchedProfile || nextRow;
+    } catch (error) {
+      if (!localFallback) {
+        throw error;
       }
-
-      throw response.error;
     }
 
-    const nextRow = response.data || { ...profileRow, ...payload };
-    const nextProfile = resolveProfileState(nextRow, user, localProfile, themeMode, accentColor);
+    const nextLocalProfile = clearPersistedLocalPatch(Object.keys(payload));
+    const nextProfile = resolveProfileState(nextRow, user, nextLocalProfile, themeMode, accentColor);
     setProfileRow(nextRow);
     setProfile(nextProfile);
 
@@ -422,7 +561,6 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
       await updateProfileRecord(
         { school: nextValue || null },
         {
-          fallbackPayload: { major: nextValue || null },
           localFallback: { school: nextValue }
         }
       );
@@ -456,13 +594,8 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setThemeMode(nextTheme);
 
     try {
-      await updateProfileRecord(
-        { theme: nextTheme },
-        {
-          successMessage: 'Theme changed.',
-          localFallback: { theme: nextTheme }
-        }
-      );
+      persistLocalPatch({ theme: nextTheme });
+      pushToast('Theme changed.', 'success');
     } catch (error) {
       setProfile((current) => ({ ...current, theme: previousTheme }));
       setThemeMode(previousTheme);
@@ -476,13 +609,8 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setAccentColor(nextAccent);
 
     try {
-      await updateProfileRecord(
-        { accent_color: nextAccent },
-        {
-          successMessage: 'Accent color changed.',
-          localFallback: { accent_color: nextAccent }
-        }
-      );
+      persistLocalPatch({ accent_color: nextAccent });
+      pushToast('Accent color changed.', 'success');
     } catch (error) {
       setProfile((current) => ({ ...current, accent_color: previousAccent }));
       setAccentColor(previousAccent);
@@ -496,10 +624,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
     setProfile((current) => ({ ...current, default_page: nextValue }));
 
     try {
-      await updateProfileRecord(
-        { default_page: nextValue },
-        { localFallback: { default_page: nextValue } }
-      );
+      persistLocalPatch({ default_page: nextValue });
       flashInlineSaved('default_page');
 
       if (typeof onRefreshProfile === 'function') {
@@ -606,17 +731,13 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
   };
 
   const handleLogout = async () => {
-    const confirmed = window.confirm('Log out of your account?');
-
-    if (!confirmed) {
-      return;
-    }
-
+    setLoggingOut(true);
     try {
       await onLogout();
       navigate('/login', { replace: true });
     } catch (error) {
       pushToast(error.message || 'Unable to log out right now.', 'error');
+      setLoggingOut(false);
     }
   };
 
@@ -836,6 +957,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
                 className="profile-field-input"
                 type="date"
                 value={profile.target_date}
+                style={{ colorScheme: theme }}
                 onChange={(event) => setProfile((current) => ({ ...current, target_date: event.target.value }))}
                 onBlur={() => {
                   void handleTargetDateBlur();
@@ -896,7 +1018,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
             <div className="profile-preference-block">
               <label className="profile-field">
                 <span className="profile-field-label">When I log in, take me to...</span>
-                <select className="profile-field-input" value={profile.default_page} onChange={(event) => void handleDefaultPageChange(event)}>
+                <select className="profile-field-input" style={{ colorScheme: theme }} value={profile.default_page} onChange={(event) => void handleDefaultPageChange(event)}>
                   {DEFAULT_PAGE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -929,7 +1051,7 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
                 <p className="profile-muted-copy">Manage your session or permanently remove your workspace data.</p>
               </div>
               <div className="profile-account-action-row">
-                <button type="button" className="profile-outline-button" onClick={() => void handleLogout()}>
+                <button type="button" className="profile-outline-button" onClick={() => setLogoutModalOpen(true)}>
                   Logout
                 </button>
                 <button type="button" className="profile-danger-button" onClick={() => setDeleteModalOpen(true)}>
@@ -968,6 +1090,24 @@ const Profile = ({ user, onLogout, onRefreshProfile }) => {
               </button>
               <button type="button" className="profile-danger-button" onClick={() => void handleDeleteAccount()} disabled={deleteConfirmText !== 'DELETE' || deleting}>
                 {deleting ? 'Deleting...' : 'Confirm Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {logoutModalOpen && (
+        <div className="profile-modal-backdrop" role="presentation" onClick={() => !loggingOut && setLogoutModalOpen(false)}>
+          <div className="profile-modal-card" role="dialog" aria-modal="true" aria-labelledby="logout-account-title" onClick={(event) => event.stopPropagation()}>
+            <div className="profile-modal-eyebrow profile-modal-eyebrow-neutral">Logout</div>
+            <h3 id="logout-account-title" className="profile-modal-title">Log out of your account?</h3>
+            <p className="profile-muted-copy">You will be returned to the login screen and will need to sign in again to continue.</p>
+            <div className="profile-modal-actions">
+              <button type="button" className="profile-secondary-button" onClick={() => setLogoutModalOpen(false)} disabled={loggingOut}>
+                Cancel
+              </button>
+              <button type="button" className="profile-primary-button" onClick={() => void handleLogout()} disabled={loggingOut}>
+                {loggingOut ? 'Logging out...' : 'Logout'}
               </button>
             </div>
           </div>
@@ -1044,6 +1184,10 @@ const profileStyles = `
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--critical);
+  }
+
+  .profile-modal-eyebrow-neutral {
+    color: var(--color-primary);
   }
 
   .profile-identity-grid {
@@ -1216,6 +1360,10 @@ const profileStyles = `
     font-size: 14px;
     color: var(--color-text);
     outline: none;
+  }
+
+  .profile-field-input::-webkit-calendar-picker-indicator {
+    cursor: pointer;
   }
 
   .profile-field-input:focus,

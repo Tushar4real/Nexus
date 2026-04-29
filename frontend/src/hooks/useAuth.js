@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { supabase, isSupabaseConfigured, missingSupabaseKeys } from '@config/supabase';
 
 const profileCache = new Map();
+const PROFILE_SELECT_SAFE = 'id,name,email,avatar';
 
 const buildAvatar = (name, email = '') => {
   const source = (name || email || 'User').trim();
@@ -14,14 +15,16 @@ const buildAvatar = (name, email = '') => {
     .slice(0, 2);
 };
 
+const hasProfileColumn = (profileRow, column) => Boolean(profileRow) && Object.prototype.hasOwnProperty.call(profileRow, column);
+
 const buildUser = (authUser, profile = {}) => ({
   ...authUser,
   ...profile,
   uid: authUser.id,
-  name: profile.display_name || profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'User',
+  name: (hasProfileColumn(profile, 'display_name') ? profile.display_name : null) || profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name || 'User',
   email: profile.email || authUser.email || '',
   avatar: profile.avatar || buildAvatar(
-    profile.display_name || profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name,
+    (hasProfileColumn(profile, 'display_name') ? profile.display_name : null) || profile.name || authUser.user_metadata?.name || authUser.user_metadata?.full_name,
     profile.email || authUser.email || ''
   )
 });
@@ -40,7 +43,7 @@ const normalizeAuthError = (error, fallbackMessage) => {
 const fetchProfile = async (userId) => {
   const { data, error } = await supabase
     .from('profiles')
-    .select('*')
+    .select(PROFILE_SELECT_SAFE)
     .eq('id', userId)
     .maybeSingle();
 

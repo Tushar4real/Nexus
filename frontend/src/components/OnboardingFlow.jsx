@@ -69,31 +69,15 @@ async function persistProfile(user, wizard) {
     id: user.uid,
     name: wizard.name.trim(),
     email: user.email || '',
-    avatar: buildAvatar(wizard.name, user.email || ''),
-    major: wizard.major.trim() || null
+    avatar: buildAvatar(wizard.name, user.email || '')
   };
 
-  const { error: insertWithMajorError } = await supabase
+  const { error } = await supabase
     .from('profiles')
     .upsert(payload, { onConflict: 'id' });
 
-  if (!insertWithMajorError) {
-    return;
-  }
-
-  if (!isMissingColumnError(insertWithMajorError, 'major')) {
-    throw insertWithMajorError;
-  }
-
-  const fallbackPayload = { ...payload };
-  delete fallbackPayload.major;
-
-  const { error: fallbackError } = await supabase
-    .from('profiles')
-    .upsert(fallbackPayload, { onConflict: 'id' });
-
-  if (fallbackError) {
-    throw fallbackError;
+  if (error) {
+    throw error;
   }
 }
 
